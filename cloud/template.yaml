@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Hakilix Cloud Backend
+
+Resources:
+  HakilixEventsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: HakilixEvents
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: device_id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: N
+      KeySchema:
+        - AttributeName: device_id
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+
+  AlertHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.lambda_handler
+      Runtime: python3.9
+      CodeUri: src/
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref HakilixEventsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HakilixEventsTable
