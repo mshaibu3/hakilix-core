@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import signal
+import sys
 from edge.utils.logger import setup_logger
 from edge.config import config
 from edge.drivers.radar_driver import RadarDriver
@@ -17,13 +18,14 @@ class EdgeNode:
         self.fusion = FusionEngine()
 
     async def startup(self):
-        print(r\"\"\"
+        # Fixed ASCII art formatting using raw string with single quotes to avoid syntax errors
+        print(r'''
    __  _____    __  _____    _____  __
   / / / /   |  / / / /  |  / /   |/ /
  / /_/ / /| | / / / // /| / / /|   / 
 / __  / ___ |/ /___/ ___ / /___/   |  
 /_/ /_/_/  |_/____/_/  |_/____/_/|_|  
-        \"\"\")
+        ''')
         logger.info(f"Booting Hakilix Core v1.0.4 | Device: {config.DEVICE_ID}")
         logger.info(f"Mode: {'SIMULATION' if config.SIMULATE_SENSORS else 'PRODUCTION'}")
         
@@ -64,7 +66,12 @@ if __name__ == "__main__":
             loop.add_signal_handler(sig, lambda: asyncio.create_task(node.shutdown()))
         asyncio.set_event_loop(loop)
     else:
-        loop = asyncio.get_event_loop()
+        # Standard Python 3.10+ startup (Windows fix)
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        except Exception:
+            loop = asyncio.get_event_loop()
 
     try:
         loop.run_until_complete(node.startup())
