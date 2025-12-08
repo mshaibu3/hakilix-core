@@ -12,15 +12,14 @@ class Settings(BaseSettings):
     MQTT_PORT: int = 8883
     
     # --- Hardware Config ---
-    # Set to False only when deploying to physical Pi
     SIMULATE_SENSORS: bool = Field(default=True, env="SIMULATE_SENSORS")
     RADAR_PORT: str = "/dev/ttyUSB0"
     RADAR_BAUD: int = 921600
     
     # --- Neuromorphic Hyperparameters (LIF Model) ---
-    LIF_THRESHOLD: float = 1.0      # Membrane potential threshold
-    LIF_DECAY: float = 0.95         # Membrane decay factor (tau)
-    LIF_REST: float = 0.0           # Resting potential
+    LIF_THRESHOLD: float = 1.0      
+    LIF_DECAY: float = 0.95         
+    LIF_REST: float = 0.0           
     
     # --- Fusion Logic ---
     FALL_VELOCITY_LIMIT: float = 2.5  # m/s
