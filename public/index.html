@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAKILIX LABS | Autonomous Bio-Digital Twinning</title>
+    <meta name="description" content="Neuromorphic Active Inference Architecture for the Silver Economy. Privacy-preserving elderly care monitoring.">
+    <meta name="author" content="Musah Shaibu">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f3ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/><path d='M12 8v4'/><path d='M12 16h.01'/></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { void: '#020203', panel: '#0a0a0f', neon: { blue: '#00f3ff', purple: '#bd00ff', green: '#00ff9d', red: '#ff003c' }, text: { main: '#e0e0e0', dim: '#858595' } },
+                    fontFamily: { sans: ['Space Grotesk', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    backgroundImage: { 'grid-cyber': "linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px)" },
+                    animation: { 'pulse-fast': 'pulse 1.5s infinite', 'spin-slow': 'spin 12s linear infinite', 'float': 'float 6s ease-in-out infinite', 'walk': 'walk 6s ease-in-out infinite', 'bob': 'bob 0.6s ease-in-out infinite' },
+                    keyframes: { float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } }, walk: { '0%, 100%': { transform: 'translateX(-40px)' }, '50%': { transform: 'translateX(40px)' } }, bob: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-4px)' } } }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #020203; color: #e0e0e0; overflow-x: hidden; }
+        .glass-panel { background: rgba(10, 10, 15, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 0 30px rgba(0, 0, 0, 0.5); }
+        .glass-panel:hover { border-color: rgba(0, 243, 255, 0.3); box-shadow: 0 0 30px rgba(0, 243, 255, 0.15); }
+        .text-glow-blue { text-shadow: 0 0 10px rgba(0, 243, 255, 0.6); }
+        #neural-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; pointer-events: none; }
+        .scanline-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; pointer-events: none; opacity: 0.15; z-index: 2; }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); border-radius: 5px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #00f3ff; cursor: pointer; margin-top: -6px; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #020203; } ::-webkit-scrollbar-thumb { background: #00f3ff; border-radius: 0; }
+    </style>
+</head>
+<body class="antialiased selection:bg-neon-blue selection:text-void">
+    <canvas id="neural-canvas"></canvas>
+    <div class="fixed inset-0 bg-grid-cyber bg-[size:40px_40px] pointer-events-none z-0"></div>
+    <div class="scanline-overlay"></div>
+
+    <!-- SYSTEM TICKER -->
+    <div class="fixed top-0 w-full z-[60] bg-void/90 border-b border-neon-blue/20 backdrop-blur-sm h-8 flex items-center justify-between px-4 font-mono text-[10px] text-neon-blue tracking-widest uppercase">
+        <div class="flex gap-4"><span class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse-fast"></span> SYSTEM ONLINE</span><span class="hidden md:inline text-text-dim">|</span><span class="hidden md:inline">NEUROMORPHIC CORE: ACTIVE</span></div>
+        <div class="flex gap-4"><span>TRL STATUS: <span class="text-neon-green">LEVEL 4 (VALIDATED)</span></span><span class="hidden md:inline text-text-dim">|</span><span class="hidden md:inline">LATENCY: 4ms</span></div>
+    </div>
+
+    <!-- NAV -->
+    <nav class="fixed w-full z-50 top-8 bg-void/60 backdrop-blur-xl border-b border-white/5" id="navbar">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <span class="font-bold text-xl text-white tracking-[0.15em]">HAKILIX<span class="text-neon-blue">.LABS</span></span>
+            <div class="hidden md:flex items-center gap-6 text-xs font-mono tracking-widest text-text-dim">
+                <a href="#vision" class="hover:text-neon-blue transition">VISION</a>
+                <a href="#science" class="hover:text-neon-blue transition">SCIENCE</a>
+                <a href="#applications" class="hover:text-neon-blue transition">CLINICAL</a>
+                <a href="#bridge" class="hover:text-neon-blue transition">NHS</a>
+                <a href="#roadmap" class="hover:text-neon-blue transition">PLAN</a>
+                <a href="#leadership" class="hover:text-neon-blue transition">PI</a>
+                <a href="#contact" class="text-neon-green hover:text-white transition">CONTACT</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="relative pt-48 pb-32" id="vision">
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-20 items-center">
+                <div data-aos="fade-right">
+                    <div class="inline-flex items-center gap-3 mb-6 px-3 py-1 border border-neon-green/30 bg-neon-green/5 text-neon-green font-mono text-[10px] tracking-widest uppercase"><span class="w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse"></span> TRL 4 Milestone Achieved</div>
+                    <h1 class="text-5xl lg:text-7xl font-bold text-white leading-[1.1] mb-6">Autonomous <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue via-white to-neon-purple text-glow-blue">Bio-Digital Twinning.</span></h1>
+                    <p class="text-lg text-text-dim mb-10 font-light leading-relaxed max-w-xl">Solving the "Privacy Paradox" in Geriatric Care. We fuse <strong>4D mmWave Radar</strong> and <strong>Radiometric Thermal Spectrography</strong> to create a privacy-preserving holographic twin of patient physiology—processed entirely at the Edge.</p>
+                    <div class="flex gap-4"><a href="#simulation" class="glass-panel px-6 py-3 text-white font-mono text-xs hover:bg-neon-blue hover:text-black transition border-l-2 border-l-neon-blue">LIVE DEMO</a><a href="#bridge" class="px-6 py-3 text-text-dim hover:text-white font-mono text-xs border border-white/10 transition">NHS INTEGRATION</a></div>
+                </div>
+                <div class="relative w-full perspective-1000" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="absolute inset-0 bg-neon-blue blur-[150px] opacity-10 animate-pulse"></div>
+                    <div class="glass-panel p-1 rounded-lg relative overflow-hidden animate-float">
+                        <div class="bg-black/60 px-6 py-3 border-b border-white/5 flex justify-between items-center"><span class="text-[10px] font-mono text-neon-blue tracking-widest flex items-center gap-2"><span class="w-1.5 h-1.5 bg-neon-blue rounded-full animate-ping"></span> LIVE_TWIN_FEED</span><span class="text-[10px] font-mono text-text-dim">ID: HKLX-01</span></div>
+                        <div class="p-8 bg-black/80 relative h-64 flex items-center justify-center overflow-hidden">
+                            <div class="relative z-10 flex flex-col items-center group animate-walk">
+                                <div class="relative animate-bob"><i data-lucide="person-standing" class="w-16 h-16 text-neon-blue drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]"></i></div>
+                                <div class="mt-4 flex gap-4 text-[10px] font-mono"><span class="text-neon-blue bg-neon-blue/10 px-2 py-1 rounded">VEL: 1.2m/s</span><span class="text-neon-purple bg-neon-purple/10 px-2 py-1 rounded">POSTURE: UPRIGHT</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- THE PROBLEM -->
+    <section id="problem" class="py-24 bg-void border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6">
+             <div class="mb-16 text-center"><h2 class="text-neon-red font-mono text-xs tracking-[0.2em] mb-4">// 01_THE_COMPLIANCE_GAP</h2><h3 class="text-3xl font-bold text-white mb-6">Why Wearables Fail the Vulnerable.</h3></div>
+             <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass-panel p-8 rounded border-t-2 border-neon-red">
+                    <h4 class="text-white font-bold mb-3">60% Rejection Rate</h4>
+                    <p class="text-sm text-text-dim">Patients with dementia often remove wearables due to sensory irritation or confusion. A device on the bedside table cannot detect a fall in the bathroom.</p>
+                </div>
+                <div class="glass-panel p-8 rounded border-t-2 border-neon-red">
+                    <h4 class="text-white font-bold mb-3">Alarm Fatigue</h4>
+                    <p class="text-sm text-text-dim">Passive Infrared (PIR) sensors generate massive false positives. Caregivers eventually stop reacting to the noise of "dumb" sensors.</p>
+                </div>
+                <div class="glass-panel p-8 rounded border-t-2 border-neon-red">
+                    <h4 class="text-white font-bold mb-3">The Dignity Dilemma</h4>
+                    <p class="text-sm text-text-dim">Families are forced to choose between safety (invasive cameras) and privacy. This leaves high-risk areas like bathrooms unmonitored.</p>
+                </div>
+             </div>
+        </div>
+    </section>
+
+    <!-- THE SCIENCE (NEW) -->
+    <section id="science" class="py-32 relative border-t border-white/5 bg-panel/30">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="mb-20"><h2 class="text-neon-blue font-mono text-xs tracking-[0.2em] mb-4">// 02_THE_SCIENCE</h2><h3 class="text-3xl md:text-5xl font-bold text-white mb-6">Beyond Deep Learning.</h3><p class="text-text-dim max-w-3xl">Standard AI relies on massive cloud datasets. Hakilix uses <strong>Neuromorphic Computing</strong>—mimicking the biological structure of the human brain to process data at the edge with extreme efficiency.</p></div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass-panel p-8 rounded-sm"><i data-lucide="brain-circuit" class="text-neon-blue w-8 h-8 mb-6"></i><h4 class="text-xl font-bold text-white mb-4">Spiking Neural Networks</h4><p class="text-sm text-text-dim mb-6">We use Leaky Integrate-and-Fire (LIF) models. Information is encoded in the timing of spikes, not the magnitude, reducing power consumption by 100x compared to CNNs.</p></div>
+                <div class="glass-panel p-8 rounded-sm"><i data-lucide="network" class="text-neon-purple w-8 h-8 mb-6"></i><h4 class="text-xl font-bold text-white mb-4">Causal Discovery</h4><p class="text-sm text-text-dim mb-6">Structural Causal Models (SCM) allow the system to reason counterfactually: "Did the subject fall, or did they lie down intentionally?" This eliminates context-blind errors.</p></div>
+                <div class="glass-panel p-8 rounded-sm"><i data-lucide="shield-check" class="text-neon-green w-8 h-8 mb-6"></i><h4 class="text-xl font-bold text-white mb-4">Homomorphic Encryption</h4><p class="text-sm text-text-dim mb-6">We utilize Federated Learning on encrypted gradients. The global model learns from local events without ever decrypting or exposing raw patient data.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRIVACY -->
+    <section id="privacy" class="py-24 bg-void border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+            <div data-aos="fade-right">
+                <h2 class="text-neon-green font-mono text-xs tracking-[0.2em] mb-4">// 03_PRIVACY_BY_DESIGN</h2>
+                <h3 class="text-3xl font-bold text-white mb-6">Zero-Optical Surveillance.</h3>
+                <p class="text-text-dim mb-6">Hakilix does not "see" a person; it sees mathematics. By using Radar and Thermal data, we generate a point cloud that is biologically accurate but visually anonymous.</p>
+                <ul class="space-y-4 font-mono text-xs text-white">
+                    <li class="flex items-center gap-3"><i data-lucide="check" class="text-neon-green"></i> NO CAMERAS OR MICROPHONES</li>
+                    <li class="flex items-center gap-3"><i data-lucide="check" class="text-neon-green"></i> EDGE PROCESSING (DATA STAYS HOME)</li>
+                    <li class="flex items-center gap-3"><i data-lucide="check" class="text-neon-green"></i> ISO 27001 ALIGNED ARCHITECTURE</li>
+                </ul>
+            </div>
+            <div class="glass-panel p-8 rounded text-center">
+                <div class="flex justify-center gap-8 mb-8">
+                    <div class="text-center"><div class="w-16 h-16 border border-white/10 rounded flex items-center justify-center mb-2"><i data-lucide="video-off" class="text-neon-red w-8 h-8"></i></div><span class="text-xs text-text-dim">RGB CAMERA</span><br><span class="text-[10px] text-neon-red">DISABLED</span></div>
+                    <div class="text-center"><div class="w-16 h-16 border border-neon-green rounded flex items-center justify-center mb-2"><i data-lucide="waves" class="text-neon-green w-8 h-8"></i></div><span class="text-xs text-text-dim">MMWAVE</span><br><span class="text-[10px] text-neon-green">ACTIVE</span></div>
+                </div>
+                <p class="text-xs text-text-dim">"We protect the resident's life without exposing their living room."</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEURAL SANDBOX -->
+    <section id="simulation" class="py-32 bg-panel/30 border-t border-white/5 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+            <div data-aos="fade-right"><h2 class="text-neon-purple font-mono text-xs tracking-[0.2em] mb-4">// 04_NEURAL_SANDBOX</h2><h3 class="text-3xl font-bold text-white mb-6">Interactive Calibration.</h3><p class="text-text-dim mb-8">Manipulate the hyperparameters of the **Leaky Integrate-and-Fire (LIF)** model.</p>
+                <div class="space-y-6 bg-void/50 p-6 rounded border border-white/10">
+                    <div><div class="flex justify-between text-xs font-mono mb-2"><span class="text-neon-blue">MEMBRANE_DECAY</span><span id="decay-val" class="text-white">0.95</span></div><input type="range" min="0.8" max="0.99" step="0.01" value="0.95" id="decay-slider" class="w-full h-1 bg-white/10 rounded-lg"></div>
+                    <div><div class="flex justify-between text-xs font-mono mb-2"><span class="text-neon-green">FIRING_THRESHOLD</span><span id="thresh-val" class="text-white">1.0</span></div><input type="range" min="0.5" max="2.0" step="0.1" value="1.0" id="thresh-slider" class="w-full h-1 bg-white/10 rounded-lg"></div>
+                </div>
+            </div>
+            <div class="glass-panel rounded-lg overflow-hidden border border-white/10">
+                <div class="bg-black px-4 py-2 border-b border-white/5 flex justify-between items-center"><span class="text-[10px] font-mono text-text-dim">REAL-TIME INFERENCE LOG</span><div class="flex items-center gap-2"><span class="w-2 h-2 bg-neon-green rounded-full animate-pulse"></span><span class="text-[10px] font-mono text-neon-green">LIVE</span></div></div>
+                <div class="relative h-64 bg-black/80"><canvas id="spike-canvas" class="w-full h-full block"></canvas></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CLINICAL APPLICATIONS (NEW) -->
+    <section id="applications" class="py-24 bg-void border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16"><h2 class="text-neon-blue font-mono text-xs tracking-[0.2em] mb-4">// 05_CLINICAL_APPLICATIONS</h2><h3 class="text-3xl font-bold text-white">More Than Just Falls.</h3></div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-panel p-6 rounded"><i data-lucide="activity" class="text-neon-blue w-6 h-6 mb-3"></i><h4 class="font-bold text-white mb-2">Fall Detection</h4><p class="text-xs text-text-dim">99% accuracy for hard and soft falls, even in bathrooms.</p></div>
+                <div class="glass-panel p-6 rounded"><i data-lucide="droplet" class="text-neon-purple w-6 h-6 mb-3"></i><h4 class="font-bold text-white mb-2">UTI Prediction</h4><p class="text-xs text-text-dim">Detects increased bathroom frequency trends 48 hours pre-symptoms.</p></div>
+                <div class="glass-panel p-6 rounded"><i data-lucide="moon" class="text-neon-green w-6 h-6 mb-3"></i><h4 class="font-bold text-white mb-2">Sleep Apnea</h4><p class="text-xs text-text-dim">Micro-doppler radar monitors respiration rates and disturbances.</p></div>
+                <div class="glass-panel p-6 rounded"><i data-lucide="footprints" class="text-neon-red w-6 h-6 mb-3"></i><h4 class="font-bold text-white mb-2">Gait Analysis</h4><p class="text-xs text-text-dim">Tracks walking velocity decline as a biomarker for frailty.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NHS BRIDGE -->
+    <section id="bridge" class="py-32 bg-panel border-t border-white/5 relative">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <h2 class="text-neon-green font-mono text-xs tracking-[0.3em] mb-4">// 06_INTEROPERABILITY</h2>
+            <h3 class="text-3xl font-bold text-white mb-12">The NHS "Home-Bridge" Engine.</h3>
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="glass-panel p-8 rounded-lg"><i data-lucide="home" class="w-10 h-10 text-neon-blue mx-auto mb-4"></i><h4 class="text-white font-bold mb-2">Patient Home</h4><p class="text-xs text-text-dim">Raw Sensor Fusion</p></div>
+                <div class="glass-panel p-8 rounded-lg border-neon-green/30"><i data-lucide="layers" class="w-10 h-10 text-neon-green mx-auto mb-4"></i><h4 class="text-white font-bold mb-2">Home-Bridge</h4><p class="text-xs text-text-dim">FHIR Conversion & Triage</p></div>
+                <div class="glass-panel p-8 rounded-lg"><i data-lucide="activity" class="w-10 h-10 text-neon-purple mx-auto mb-4"></i><h4 class="text-white font-bold mb-2">Virtual Ward</h4><p class="text-xs text-text-dim">EMIS / SystmOne</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROADMAP -->
+    <section id="roadmap" class="py-32 bg-panel border-t border-white/5">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h2 class="text-neon-blue font-mono text-xs tracking-[0.3em] mb-4">// 07_ROADMAP</h2>
+            <h3 class="text-3xl font-bold text-white mb-12">36-Month R&D Horizon</h3>
+            <div class="space-y-4">
+                <div class="glass-panel p-6 rounded border-l-4 border-neon-green text-left"><span class="text-neon-green font-bold">PHASE 1 (COMPLETED)</span> - TRL 4 Validated.</div>
+                <div class="glass-panel p-6 rounded border-l-4 border-neon-blue text-left"><span class="text-white font-bold">PHASE 2 (ACTIVE)</span> - Hardware Integration & NHS DTAC.</div>
+                <div class="glass-panel p-6 rounded border-l-4 border-white/20 text-left opacity-60"><span class="text-white font-bold">PHASE 3</span> - Pilot Deployment (50 Homes).</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LEADERSHIP -->
+    <section id="leadership" class="py-32 bg-void border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16">
+            <div data-aos="fade-right">
+                <h2 class="text-neon-blue font-mono text-xs tracking-[0.2em] mb-4">// 08_PRINCIPAL_INVESTIGATOR</h2>
+                <h3 class="text-4xl font-bold text-white mb-4">Musah Shaibu</h3>
+                <p class="text-text-dim mb-8">"Encoding dignity into the algorithm itself."<br>MSc Advanced Computer Science + 4 Years Clinical Experience.</p>
+                <div class="flex gap-4"><a href="https://linkedin.com/in/musah-shaibu-19112265" class="px-4 py-2 border border-white/10 rounded hover:border-neon-blue hover:text-neon-blue text-[10px] font-mono text-white transition">LINKEDIN</a></div>
+            </div>
+            <div data-aos="fade-left"><div class="glass-panel p-1 rounded-lg"><div class="bg-black/80 p-8 text-center"><img src="profile.jpg" class="w-32 h-32 mx-auto rounded-full border-2 border-neon-blue p-1 mb-6 grayscale object-cover"><h4 class="text-2xl font-bold text-white">Musah Shaibu</h4><p class="text-neon-blue font-mono text-xs tracking-widest">PRINCIPAL INVESTIGATOR</p></div></div></div>
+        </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact" class="py-20 border-t border-white/5 bg-panel/50">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <h2 class="text-neon-green font-mono text-xs tracking-[0.2em] mb-4">// 09_COMMUNICATION_UPLINK</h2>
+            <h3 class="text-3xl font-bold text-white mb-12">Strategic Partnerships</h3>
+            <div class="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <div class="glass-panel p-8 rounded hover:border-neon-blue/50 transition">
+                    <h4 class="text-white font-bold mb-1">Clinical Trials</h4><p class="text-xs text-text-dim mb-4">For NHS Trusts.</p>
+                    <a href="mailto:trials@hakilix.co.uk" class="text-[10px] font-mono text-neon-blue">INITIATE_CONTACT</a>
+                </div>
+                <div class="glass-panel p-8 rounded hover:border-neon-purple/50 transition">
+                    <h4 class="text-white font-bold mb-1">Investor Relations</h4><p class="text-xs text-text-dim mb-4">Seed Stage.</p>
+                    <a href="mailto:invest@hakilix.co.uk" class="text-[10px] font-mono text-neon-purple">REQUEST_ACCESS</a>
+                </div>
+                <div class="glass-panel p-8 rounded hover:border-neon-green/50 transition">
+                    <h4 class="text-white font-bold mb-1">General Inquiries</h4><p class="text-xs text-text-dim mb-4">Media & Academic.</p>
+                    <a href="mailto:research@hakilix.co.uk" class="text-[10px] font-mono text-neon-green">OPEN_CHANNEL</a>
+                </div>
+            </div>
+            <div class="mt-12 text-center"><p class="text-[10px] font-mono text-text-dim uppercase tracking-widest"><i data-lucide="map-pin" class="w-3 h-3 inline mr-1 text-neon-red"></i> HQ: St Helens, United Kingdom</p></div>
+        </div>
+    </section>
+
+    <!-- FAQ (NEW) -->
+    <section class="py-20 border-t border-white/5 bg-void">
+        <div class="max-w-3xl mx-auto px-6">
+            <h3 class="text-xl font-bold text-white mb-8 text-center">System FAQ</h3>
+            <div class="space-y-4">
+                <div class="glass-panel p-4 rounded"><h5 class="text-white font-bold text-sm">Does Hakilix use cameras?</h5><p class="text-xs text-text-dim mt-2">No. We use mmWave radar and low-res thermal sensors. No optical images are ever captured.</p></div>
+                <div class="glass-panel p-4 rounded"><h5 class="text-white font-bold text-sm">Does it work in the dark?</h5><p class="text-xs text-text-dim mt-2">Yes. Both radar and thermal sensors operate independently of light conditions, ensuring 24/7 protection.</p></div>
+                <div class="glass-panel p-4 rounded"><h5 class="text-white font-bold text-sm">What happens during a power cut?</h5><p class="text-xs text-text-dim mt-2">The Hakilix Node includes a backup battery and cellular (LTE-M) failover for critical alerts.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-16 border-t border-white/5 bg-void text-center">
+        <div class="flex flex-col items-center gap-6"><span class="font-bold text-2xl text-white tracking-[0.2em]">HAKILIX<span class="text-neon-blue">.LABS</span></span><p class="text-text-dim text-xs font-mono">© 2025 Hakilix Labs UK Ltd. All Rights Reserved.</p></div>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+            if (typeof AOS !== 'undefined') AOS.init({ once: true, duration: 1000, offset: 50 });
+
+            // SNN SIMULATION
+            const spikeCanvas = document.getElementById('spike-canvas');
+            if(spikeCanvas) {
+                const sCtx = spikeCanvas.getContext('2d');
+                let sWidth, sHeight, time = 0;
+                let v_history = new Array(200).fill(0);
+                function resizeSpike() { sWidth = spikeCanvas.width = spikeCanvas.parentElement.clientWidth; sHeight = spikeCanvas.height = spikeCanvas.parentElement.clientHeight; }
+                window.addEventListener('resize', resizeSpike); setTimeout(resizeSpike, 100);
+                function updateSNN() {
+                    const input = (Math.sin(time * 0.05) + 1) * 0.5 + (Math.random() - 0.5) * 0.1;
+                    let membrane = v_history[v_history.length-1] * 0.95 + input * 0.2;
+                    if (membrane > 1.0) membrane = 0;
+                    v_history.push(membrane); v_history.shift(); time++;
+                    sCtx.clearRect(0, 0, sWidth, sHeight);
+                    sCtx.strokeStyle = '#00f3ff'; sCtx.lineWidth = 2; sCtx.beginPath();
+                    for (let i = 0; i < 200; i++) { const x = (i / 200) * sWidth; const y = sHeight - (v_history[i] / 2.0 * sHeight) - 20; if(i===0) sCtx.moveTo(x, y); else sCtx.lineTo(x, y); }
+                    sCtx.stroke();
+                    requestAnimationFrame(updateSNN);
+                }
+                updateSNN();
+            }
+            
+            // PARTICLES
+            const canvas = document.getElementById('neural-canvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                let width, height, particles = [];
+                function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+                window.addEventListener('resize', resize); resize();
+                class Particle {
+                    constructor() { this.x = Math.random()*width; this.y = Math.random()*height; this.vx = (Math.random()-0.5)*0.5; this.vy = (Math.random()-0.5)*0.5; }
+                    update() { this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>width)this.vx*=-1; if(this.y<0||this.y>height)this.vy*=-1; }
+                    draw() { ctx.fillStyle='rgba(0,243,255,0.4)'; ctx.beginPath(); ctx.arc(this.x,this.y,1,0,Math.PI*2); ctx.fill(); }
+                }
+                for(let i=0; i<60; i++) particles.push(new Particle());
+                function animate() {
+                    ctx.clearRect(0,0,width,height);
+                    particles.forEach((p, i) => {
+                        p.update(); p.draw();
+                        for(let j=i; j<particles.length; j++) {
+                            const dx = p.x - particles[j].x, dy = p.y - particles[j].y, dist = Math.sqrt(dx*dx+dy*dy);
+                            if(dist<100) { ctx.strokeStyle=`rgba(0,243,255,${0.1-dist/1000})`; ctx.lineWidth=0.5; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(particles[j].x,particles[j].y); ctx.stroke(); }
+                        }
+                    });
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            }
+        });
+    </script>
+</body>
+</html>

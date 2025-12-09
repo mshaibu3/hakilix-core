@@ -1,9 +1,4 @@
-asyncio>=3.4.3
-paho-mqtt>=1.6.1
 numpy>=1.21.0
-scipy>=1.7.0
-pyserial>=3.5
-pydantic>=2.0.0
-pydantic-settings>=2.0.0
-boto3>=1.26.0
-colorlog>=6.7.0
+requests>=2.26.0
+flask>=2.0.0
+# Hakilix Proprietary Modules (Internal Use Only)

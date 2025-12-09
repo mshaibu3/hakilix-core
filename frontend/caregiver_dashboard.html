@@ -2,169 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hakilix Care Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        body { background-color: #0f172a; color: #e2e8f0; }
-        .blink { animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
-    </style>
 </head>
-<body class="antialiased">
-    <nav class="border-b border-slate-700 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <i data-lucide="activity" class="text-sky-400"></i>
-                <span class="font-bold text-lg tracking-wider">HAKILIX<span class="text-sky-400">.CARE</span></span>
-            </div>
-            <div class="flex items-center gap-4 text-xs font-mono">
-                <span class="text-green-400 flex items-center gap-2"><span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> SYSTEM ONLINE</span>
-                <span class="text-slate-500">V.2.0.4</span>
-            </div>
+<body class="bg-slate-900 text-white">
+    <nav class="border-b border-slate-700 bg-slate-900/50 p-4">
+        <div class="flex justify-between items-center max-w-7xl mx-auto">
+            <span class="font-bold text-lg">HAKILIX<span class="text-sky-400">.CARE</span></span>
+            <span class="text-green-400 text-xs font-mono">SYSTEM ONLINE</span>
         </div>
     </nav>
-
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Status Grid -->
+    <main class="max-w-7xl mx-auto p-4 mt-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <p class="text-slate-400 text-xs font-bold uppercase">Active Patients</p>
-                        <h3 class="text-3xl font-bold text-white mt-1">42</h3>
-                    </div>
-                    <div class="p-2 bg-slate-700 rounded"><i data-lucide="users" class="w-5 h-5 text-slate-400"></i></div>
-                </div>
-                <p class="text-xs text-green-400 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> +2 this week</p>
+            <div class="bg-slate-800 p-6 rounded border border-slate-700">
+                <p class="text-slate-400 text-xs font-bold">Active Patients</p>
+                <h3 class="text-3xl font-bold">42</h3>
             </div>
-            
-            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <p class="text-slate-400 text-xs font-bold uppercase">Critical Alerts</p>
-                        <h3 class="text-3xl font-bold text-red-500 mt-1">0</h3>
-                    </div>
-                    <div class="p-2 bg-red-900/20 rounded"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i></div>
-                </div>
-                <p class="text-xs text-slate-500">Last 24 hours</p>
+            <div class="bg-slate-800 p-6 rounded border border-slate-700">
+                <p class="text-slate-400 text-xs font-bold">Critical Alerts</p>
+                <h3 class="text-3xl font-bold text-red-500">0</h3>
             </div>
-
-            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <p class="text-slate-400 text-xs font-bold uppercase">System Health</p>
-                        <h3 class="text-3xl font-bold text-sky-400 mt-1">99.9%</h3>
-                    </div>
-                    <div class="p-2 bg-sky-900/20 rounded"><i data-lucide="server" class="w-5 h-5 text-sky-400"></i></div>
-                </div>
-                <p class="text-xs text-slate-500">All nodes connected</p>
-            </div>
-        </div>
-
-        <!-- Live Feed -->
-        <div class="grid lg:grid-cols-3 gap-8">
-            <!-- Patient List -->
-            <div class="lg:col-span-2 bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-700 flex justify-between items-center">
-                    <h3 class="font-bold text-white">Live Patient Monitoring</h3>
-                    <span class="text-xs bg-sky-500/10 text-sky-400 px-2 py-1 rounded border border-sky-500/20 font-mono">REAL-TIME</span>
-                </div>
-                <table class="w-full text-sm text-left">
-                    <thead class="text-xs text-slate-400 uppercase bg-slate-900/50">
-                        <tr>
-                            <th class="px-6 py-3">Patient ID</th>
-                            <th class="px-6 py-3">Status</th>
-                            <th class="px-6 py-3">Last Event</th>
-                            <th class="px-6 py-3">Risk Score</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-700" id="patient-table">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
-                <h3 class="font-bold text-white mb-4">Event Log</h3>
-                <div class="space-y-4" id="event-log">
-                    <!-- Populated by JS -->
-                </div>
+            <div class="bg-slate-800 p-6 rounded border border-slate-700">
+                <p class="text-slate-400 text-xs font-bold">System Health</p>
+                <h3 class="text-3xl font-bold text-sky-400">99.9%</h3>
             </div>
         </div>
     </main>
-
-    <script>
-        lucide.createIcons();
-
-        // MOCK DATA GENERATOR
-        const patients = [
-            { id: "PAT-8492", name: "Sarah J.", status: "SAFE", risk: "Low", last: "Walking (0.8m/s)" },
-            { id: "PAT-3321", name: "Robert M.", status: "SAFE", risk: "Medium", last: "Sitting (Living Room)" },
-            { id: "PAT-9921", name: "Elise T.", status: "SAFE", risk: "Low", last: "Sleeping (Bedroom)" },
-        ];
-
-        function renderTable() {
-            const tbody = document.getElementById('patient-table');
-            tbody.innerHTML = patients.map(p => `
-                <tr class="hover:bg-slate-700/50 transition">
-                    <td class="px-6 py-4 font-medium text-white">${p.id} <span class="text-slate-500 ml-2">${p.name}</span></td>
-                    <td class="px-6 py-4">
-                        <span class="px-2 py-1 rounded text-xs font-bold ${p.status === 'SAFE' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-500 animate-pulse'}">
-                            ${p.status}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 text-slate-300">${p.last}</td>
-                    <td class="px-6 py-4">
-                        <div class="w-full bg-slate-700 rounded-full h-1.5">
-                            <div class="bg-sky-500 h-1.5 rounded-full" style="width: ${p.risk === 'Low' ? '15%' : '45%'}"></div>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function addLog(msg, type='info') {
-            const log = document.getElementById('event-log');
-            const time = new Date().toLocaleTimeString();
-            const color = type === 'alert' ? 'text-red-400' : 'text-slate-400';
-            const icon = type === 'alert' ? 'alert-circle' : 'activity';
-            
-            const item = document.createElement('div');
-            item.className = "flex gap-3 text-xs border-b border-slate-700 pb-2 last:border-0";
-            item.innerHTML = `
-                <div class="mt-0.5"><i data-lucide="${icon}" class="w-4 h-4 ${color}"></i></div>
-                <div>
-                    <p class="${color} font-mono">[${time}] ${msg}</p>
-                </div>
-            `;
-            log.prepend(item);
-            if(log.children.length > 6) log.lastElementChild.remove();
-            lucide.createIcons();
-        }
-
-        // SIMULATION LOOP
-        renderTable();
-        addLog("System initialized. Monitoring 42 nodes.", "info");
-
-        setInterval(() => {
-            // Randomly trigger an event
-            if(Math.random() > 0.7) {
-                const p = patients[Math.floor(Math.random() * patients.length)];
-                addLog(`Routine update: ${p.id} - ${p.last}`, "info");
-            }
-        }, 2000);
-
-        // Simulate a FALL every 10 seconds for demo purposes
-        setInterval(() => {
-            addLog("CRITICAL ALERT: Fall Detected at PAT-8492. Sending Ambulance Request...", "alert");
-            // Flash the UI red
-            document.body.classList.add('bg-red-900/10');
-            setTimeout(() => document.body.classList.remove('bg-red-900/10'), 500);
-        }, 10000);
-
-    </script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>

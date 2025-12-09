@@ -1,39 +1,28 @@
-# HAKILIX CORE | Neuromorphic Edge AI Platform
+# HAKILIX CORE™
 
-![Status](https://img.shields.io/badge/Status-Alpha-orange) ![Python](https://img.shields.io/badge/Python-3.9%2B-blue) ![License](https://img.shields.io/badge/License-Proprietary-red)
+**Autonomous Bio-Digital Twinning Architecture for the Silver Economy.** *Principal Architect: Musah Shaibu (MS3) | © 2025 Hakilix Labs UK Ltd.*
 
-**Principal Investigator:** Musah Shaibu  
-**Institution:** Hakilix Labs UK  
+![Status](https://img.shields.io/badge/Status-TRL_4_Validated-success)
+![License](https://img.shields.io/badge/License-Proprietary-red)
+![Compliance](https://img.shields.io/badge/Compliance-NHS_DTAC-blue)
 
-## 1. Overview
-Hakilix is a privacy-first ambient intelligence platform designed for the Ageing Society. It utilizes **Spiking Neural Networks (SNN)** and **Structural Causal Models (SCM)** to detect physiological anomalies (falls, gait deterioration) without optical cameras.
+## 📖 Overview
+Hakilix Core is a decentralized, neuromorphic Edge AI platform designed to bridge the gap between independent living and clinical oversight. By fusing **4D mmWave Radar** with **Radiometric Thermal** sensing, the system creates a privacy-preserving "Digital Twin" of the resident, allowing for the detection of micro-degradations in mobility (Predictive Reablement) without the use of invasive cameras.
 
-## 2. Architecture
-The system follows a distributed "Edge-Cloud Continuum" topology:
+## 🚀 Key Features (v4.5 Platinum)
+* **Neuromorphic Edge Inference:** Leaky Integrate-and-Fire (LIF) models running on low-power edge TPUs.
+* **Privacy-by-Design:** No optical cameras. No raw data leaves the home; only encrypted telemetry.
+* **NHS Home-Bridge Engine:** Interoperability layer converting sensor data to FHIR standards for Virtual Ward integration.
+* **Care Command Center:** Real-time agency dashboard for fleet management and risk triage.
 
-```
-[ RADAR (mmWave) ] --(UART)--> [ EDGE NODE (Pi 4) ] --(MQTT/TLS)--> [ AWS IOT CORE ]
-                                                                        |
-[ THERMAL (Lepton)] --(SPI)--> [ SNN INFERENCE  ]                       v
-                               [ HOME BRIDGE (FHIR) ]             [ CLOUD BACKEND ]
-                                                                        |
-                                                                        v
-                                                               [ CAREGIVER DASHBOARD ]
-```
+## 🛠️ Technical Stack
+* **Frontend:** HTML5, Tailwind CSS, Three.js (Holographic Visualization)
+* **Backend Simulation:** Python (Mock), FHIR JSON Structure
+* **Edge Logic:** Spiking Neural Networks (SNN), Active Inference
 
-## 3. Quick Start (Simulation Mode)
+## 🔒 License & IP
+This repository and its contents are the proprietary intellectual property of **Hakilix Labs UK Ltd**.
+Unauthorized copying, distribution, or reverse engineering is strictly prohibited.
 
-### A. Run the Edge Node (Sensor Simulation)
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python3 -m edge.main
-```
-
-### B. Launch the Caregiver Dashboard
-Open `frontend/caregiver_dashboard.html` in your web browser. It will connect to the mock API and display live alerts.
-
-## 4. License
-Copyright (c) 2025 Hakilix Labs UK Ltd. All Rights Reserved.
-Strictly confidential. Do not distribute without written permission.
+**Principal Investigator:** Musah Shaibu (MS3)
+**Contact:** research@hakilix.co.uk
