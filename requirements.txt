@@ -1,4 +1,5 @@
-numpy>=1.21.0
-requests>=2.26.0
-flask>=2.0.0
-# Hakilix Proprietary Modules (Internal Use Only)
+fastapi
+uvicorn
+requests
+pydantic
+websockets

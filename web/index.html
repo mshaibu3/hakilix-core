@@ -1,10 +1,9 @@
 <!-- 
     ========================================================================
     PROJECT: HAKILIX CORE | AUTONOMOUS BIO-DIGITAL TWINNING PLATFORM
-    VERSION: 4.5.0 (TACTICAL COMMAND UPDATE)
+    VERSION: 9.5.0 (RESILIENT ENTERPRISE UPDATE)
     COPYRIGHT: © 2025 HAKILIX LABS UK LTD.
-    PRINCIPAL ARCHITECT: MUSAH SHAIBU (MS3)
-    LICENSE: PROPRIETARY & CONFIDENTIAL. UNAUTHORIZED COPYING IS PROHIBITED.
+    LICENSE: PROPRIETARY & CONFIDENTIAL.
     ========================================================================
 -->
 <!DOCTYPE html>
@@ -12,415 +11,361 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HAKILIX LABS | Autonomous Bio-Digital Twinning</title>
-    
-    <!-- Core Libraries -->
+    <title>HAKILIX | Real-Time Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script> 
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { void: '#020203', panel: '#0a0a0f', neon: { blue: '#00f3ff', purple: '#bd00ff', green: '#00ff9d', red: '#ff003c' }, text: { main: '#e0e0e0', dim: '#9ca3af' } },
-                    fontFamily: { sans: ['Space Grotesk', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
-                    backgroundImage: { 'grid-cyber': "linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px)" },
-                    animation: { 'pulse-fast': 'pulse 1.5s infinite', 'scan': 'scan 3s linear infinite', 'radar-spin': 'spin 4s linear infinite' }
+                    colors: { 
+                        slate: { 850: '#151b28', 900: '#0f172a', 950: '#020617' },
+                        primary: '#0ea5e9', 
+                        glass: 'rgba(255, 255, 255, 0.05)',
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    animation: { 'pulse-slow': 'pulse 3s infinite' }
                 }
             }
         }
     </script>
     <style>
-        body { background-color: #020203; color: #e0e0e0; overflow-x: hidden; }
-        .glass-panel { background: rgba(10, 10, 15, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 0 30px rgba(0, 0, 0, 0.5); transition: border-color 0.3s; }
-        .glass-panel:hover { border-color: rgba(0, 243, 255, 0.3); box-shadow: 0 0 30px rgba(0, 243, 255, 0.15); }
-        .modal-blur { backdrop-filter: blur(15px); background: rgba(0,0,0,0.85); }
-        .dash-row:hover { background: rgba(0, 243, 255, 0.05); }
-        .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-        .status-green { background: #00ff9d; box-shadow: 0 0 5px #00ff9d; }
-        .status-amber { background: #ffaa00; box-shadow: 0 0 5px #ffaa00; }
-        .status-red { background: #ff003c; box-shadow: 0 0 5px #ff003c; animation: pulse 1s infinite; }
+        body { background-color: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .glass-dashboard { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); }
+        .card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; }
+        .card:hover { border-color: rgba(14, 165, 233, 0.4); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); }
+        .patient-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        .thermal-overlay { background: linear-gradient(135deg, #0000ff, #ff0000, #ffff00, #ffffff); mix-blend-mode: hard-light; opacity: 0.8; }
         
-        /* Tactical Grid Background for Dashboard */
-        .tactical-grid {
-            background-image: 
-                linear-gradient(rgba(50, 50, 50, 0.5) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(50, 50, 50, 0.5) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #050505; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        /* Modal Overlay */
+        .crud-modal { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px); }
     </style>
 </head>
-<body class="antialiased selection:bg-neon-blue selection:text-void font-sans">
-    <div class="fixed inset-0 bg-grid-cyber bg-[size:40px_40px] pointer-events-none z-0"></div>
+<body class="h-screen flex flex-col overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#020617] to-black">
 
-    <!-- SYSTEM TICKER -->
-    <div class="fixed top-0 w-full z-[60] bg-void/90 border-b border-neon-blue/20 backdrop-blur-sm h-8 flex items-center justify-between px-4 font-mono text-[10px] text-neon-blue tracking-widest uppercase">
-        <div class="flex gap-4"><span class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse-fast"></span> SYSTEM ONLINE</span><span class="hidden md:inline text-white font-bold">ARCHITECT: MUSAH SHAIBU (MS3)</span></div>
-        <div class="flex gap-4"><span>TRL 4 VALIDATED</span><span>|</span><span>SECURE CONNECTION</span></div>
+    <header class="h-14 glass-dashboard border-b border-white/5 flex items-center justify-between px-6 z-50 shrink-0 sticky top-0">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="bg-primary/20 p-1.5 rounded"><i data-lucide="activity" class="w-5 h-5 text-primary"></i></div>
+                <span class="font-bold text-lg tracking-tight text-white">HAKILIX<span class="text-primary font-normal">.CARE</span></span>
+            </div>
+            <div class="hidden md:flex gap-6 text-xs text-slate-400 border-l border-white/10 pl-6 h-6 items-center font-mono">
+                <span id="socket-status"><span class="text-red-500">●</span> SOCKET: CONNECTING...</span>
+                <span>UPLINK: <span class="text-neon-green">ENCRYPTED</span></span>
+                <span>VIRTUAL WARD: 85 BEDS</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button id="auth-btn" onclick="openLoginModal()" class="bg-primary hover:bg-sky-600 text-white px-4 py-1.5 rounded text-xs font-semibold transition shadow-lg shadow-sky-900/20 backdrop-blur-md">AGENCY LOGIN</button>
+        </div>
+    </header>
+
+    <div id="main-content" class="flex-1 relative overflow-hidden">
+        
+        <!-- LANDING PAGE -->
+        <div id="landing-view" class="absolute inset-0 overflow-y-auto p-8 flex flex-col items-center justify-center">
+            <div class="max-w-3xl text-center space-y-6">
+                <div class="inline-block px-3 py-1 bg-white/5 rounded-full text-[10px] font-mono text-primary tracking-widest border border-white/10">ENTERPRISE RELEASE v9.5</div>
+                <h1 class="text-5xl font-bold tracking-tight leading-tight text-white drop-shadow-lg">Autonomous Safety Intelligence <br><span class="text-slate-400">for the Modern Care Sector.</span></h1>
+                <p class="text-slate-300 text-lg max-w-2xl mx-auto drop-shadow-md">
+                    Hakilix provides <strong>privacy-first, camera-free monitoring</strong> using advanced radar kinematics to detect falls, confusion, and frailty trends automatically.
+                </p>
+                <div class="flex justify-center gap-4 pt-4">
+                    <button onclick="openLoginModal()" class="bg-white text-slate-950 px-6 py-3 rounded font-bold text-sm hover:bg-slate-200 transition shadow-xl">ACCESS DASHBOARD</button>
+                    <a href="https://www.hakilix.co.uk/" target="_blank" class="px-6 py-3 rounded border border-white/20 text-slate-200 font-bold text-sm hover:bg-white/10 hover:border-white/40 transition">LEARN MORE</a>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6 mt-20 max-w-5xl w-full">
+                <div class="card p-6">
+                    <div class="bg-blue-500/10 w-10 h-10 rounded flex items-center justify-center mb-4 border border-blue-500/20"><i data-lucide="eye-off" class="text-blue-400"></i></div>
+                    <h3 class="font-bold text-slate-100 mb-2">100% Privacy</h3>
+                    <p class="text-xs text-slate-400">No cameras. No wearables. Radar sensors map movement without optical images.</p>
+                </div>
+                <div class="card p-6">
+                    <div class="bg-green-500/10 w-10 h-10 rounded flex items-center justify-center mb-4 border border-green-500/20"><i data-lucide="trending-up" class="text-green-400"></i></div>
+                    <h3 class="font-bold text-slate-100 mb-2">Auto-Classification</h3>
+                    <p class="text-xs text-slate-400">Detects sitting, standing, walking, lying down, and confusion patterns instantly.</p>
+                </div>
+                <div class="card p-6">
+                    <div class="bg-purple-500/10 w-10 h-10 rounded flex items-center justify-center mb-4 border border-purple-500/20"><i data-lucide="server" class="text-purple-400"></i></div>
+                    <h3 class="font-bold text-slate-100 mb-2">Resilient Edge</h3>
+                    <p class="text-xs text-slate-400">Store-and-forward buffering ensures no critical data is lost during outages.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AGENCY DASHBOARD -->
+        <div id="agency-view" class="absolute inset-0 hidden flex flex-col bg-slate-950/80 backdrop-blur-sm">
+            
+            <!-- Alert Banner -->
+            <div id="alert-banner" class="bg-red-900/90 border-b border-red-700 p-4 hidden shadow-2xl z-50 animate-pulse-slow backdrop-blur-xl">
+                <div class="max-w-7xl mx-auto flex items-start justify-between">
+                    <div class="flex gap-6">
+                        <div class="w-32 h-24 bg-black rounded border border-red-500 relative overflow-hidden flex items-center justify-center group cursor-pointer shadow-inner">
+                            <div class="absolute inset-0 thermal-overlay"></div>
+                            <svg viewBox="0 0 100 100" class="w-full h-full p-2 relative z-10 opacity-90 fill-white"><path d="M20,80 Q50,70 80,80 T90,90" stroke="white" stroke-width="2" fill="none"/><circle cx="40" cy="75" r="5" /><rect x="35" y="78" width="40" height="8" rx="2" /></svg>
+                            <div class="absolute bottom-1 right-1 text-[8px] font-mono bg-black/50 px-1 text-white">THERMAL_CAM_04</div>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-3 mb-1"><span class="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded animate-pulse shadow-md">CRITICAL ALERT</span><h2 class="text-xl font-bold text-white drop-shadow-md">FALL DETECTED: HKLX-09</h2></div>
+                            <p class="text-sm text-red-200 mb-2 font-medium">Living Room • Impact 4.5G • Lying Down (No Recovery)</p>
+                            <div class="flex gap-4 text-xs font-mono text-red-100"><span class="bg-red-950/40 px-2 py-0.5 rounded border border-red-800">HR: 110 bpm</span><span class="bg-red-950/40 px-2 py-0.5 rounded border border-red-800">RESP: 22/min</span></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2"><button onclick="ackAlert()" class="bg-white text-red-900 px-6 py-2 rounded font-bold text-sm hover:bg-gray-100 transition shadow-lg">ACKNOWLEDGE & DISPATCH</button></div>
+                </div>
+            </div>
+
+            <!-- Dashboard Main -->
+            <div class="flex-1 flex overflow-hidden">
+                <div class="w-64 glass-dashboard border-r border-white/5 flex flex-col shrink-0 z-20">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fleet Overview</div>
+                            <button onclick="openPatientModal()" class="text-xs bg-primary/20 hover:bg-primary/40 text-primary px-2 py-1 rounded border border-primary/30 font-bold transition">+ ADD UNIT</button>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center bg-white/5 p-2 rounded border border-white/10"><span class="text-xs text-slate-300">Total Active</span><span class="font-bold text-white" id="total-patients">85</span></div>
+                            <div class="flex justify-between items-center bg-red-500/10 p-2 rounded border border-red-500/30"><span class="text-xs text-red-400">Critical Alerts</span><span class="font-bold text-red-500" id="crit-count">0</span></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Bar -->
+                    <div class="p-4 pt-0 border-b border-white/5">
+                         <div class="relative">
+                            <i data-lucide="search" class="absolute left-2 top-2.5 w-3 h-3 text-slate-500"></i>
+                            <input type="text" id="patient-search" placeholder="Search Unit ID..." class="w-full bg-black/40 border border-white/10 rounded pl-7 pr-2 py-2 text-xs font-mono text-white focus:border-primary outline-none transition" onkeyup="filterPatients()">
+                        </div>
+                    </div>
+
+                    <div class="p-4 pt-4 border-b border-white/5">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Live Logs (WebSocket)</div>
+                        <div id="logs-container" class="h-40 overflow-y-auto font-mono text-[9px] text-slate-400 space-y-1 bg-black/40 p-2 rounded border border-white/5 shadow-inner"></div>
+                    </div>
+                    <div class="flex-1 p-4">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Performance</div>
+                        <div class="bg-white/5 rounded p-2 border border-white/5"><canvas id="uptime-chart" class="h-20 w-full"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="flex-1 p-6 overflow-y-auto relative z-10">
+                    <div class="flex justify-between items-end mb-6">
+                        <h2 class="text-xl font-bold text-white drop-shadow-sm">Active Monitoring <span class="text-slate-500 font-normal text-sm ml-2">Real-Time Sensor Feed</span></h2>
+                        <div class="flex gap-2">
+                            <button class="bg-white/10 border border-white/10 text-xs px-3 py-1.5 rounded text-slate-300">Filter: All</button>
+                            <button class="bg-white/10 border border-white/10 text-xs px-3 py-1.5 rounded text-slate-300">Sort: Risk</button>
+                        </div>
+                    </div>
+                    <div id="patient-grid" class="patient-grid pb-20"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- LOGIN MODAL -->
+    <!-- ADD/EDIT PATIENT MODAL -->
+    <div id="patient-modal" class="fixed inset-0 z-[100] crud-modal hidden flex items-center justify-center">
+        <div class="bg-slate-900 border border-slate-700 p-6 rounded-lg max-w-sm w-full shadow-2xl relative">
+            <h3 id="modal-title" class="text-lg font-bold text-white mb-4">Register New Unit</h3>
+            <div class="space-y-3">
+                <div><label class="text-[10px] text-slate-400 uppercase">Unit ID</label><input type="text" id="p-id" class="w-full bg-black/50 border border-slate-700 rounded p-2 text-white text-sm focus:border-primary outline-none"></div>
+                <div><label class="text-[10px] text-slate-400 uppercase">Resident Name</label><input type="text" id="p-name" class="w-full bg-black/50 border border-slate-700 rounded p-2 text-white text-sm focus:border-primary outline-none"></div>
+                <div><label class="text-[10px] text-slate-400 uppercase">Location / Setting</label><input type="text" id="p-loc" class="w-full bg-black/50 border border-slate-700 rounded p-2 text-white text-sm focus:border-primary outline-none"></div>
+                 <div><label class="text-[10px] text-slate-400 uppercase">Clinical Focus</label><input type="text" id="p-focus" class="w-full bg-black/50 border border-slate-700 rounded p-2 text-white text-sm focus:border-primary outline-none"></div>
+                <div class="pt-2 flex gap-2"><button onclick="savePatient()" class="flex-1 bg-primary hover:bg-sky-600 text-white py-2 rounded text-xs font-bold transition">SAVE RECORD</button><button onclick="closePatientModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded text-xs font-bold transition">CANCEL</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN MODAL (Initial) -->
     <div id="login-modal" class="fixed inset-0 z-[100] modal-blur hidden flex items-center justify-center">
-        <div class="bg-panel border border-neon-blue/30 p-8 rounded-lg max-w-md w-full shadow-[0_0_50px_rgba(0,243,255,0.1)] relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-neon-blue animate-pulse"></div>
-            <div class="text-center mb-8">
+        <div class="bg-panel border border-neon-blue/30 p-8 rounded-lg max-w-md w-full shadow-[0_0_50px_rgba(0,243,255,0.1)] relative">
+            <div class="text-center mb-6">
                 <h2 class="text-2xl font-bold text-white tracking-widest">SECURE GATEWAY</h2>
-                <p class="text-xs text-neon-blue font-mono mt-2">HAKILIX LABS IDENTITY VERIFICATION</p>
+                <p class="text-xs text-neon-blue font-mono mt-2">HAKILIX ENTERPRISE ACCESS</p>
             </div>
             <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-mono text-text-dim uppercase">Operator ID</label>
-                    <input type="text" value="MS3-ADMIN" class="w-full bg-black/50 border border-white/10 rounded p-3 text-white font-mono focus:border-neon-blue outline-none transition" readonly>
-                </div>
-                <div>
-                    <label class="text-[10px] font-mono text-text-dim uppercase">Access Key</label>
-                    <input type="password" value="••••••••••••" class="w-full bg-black/50 border border-white/10 rounded p-3 text-white font-mono focus:border-neon-blue outline-none transition" readonly>
-                </div>
-                <button onclick="authenticate()" class="w-full bg-neon-blue/10 border border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-black py-3 font-bold tracking-widest transition uppercase text-xs">Authenticate</button>
+                <div><label class="text-[10px] font-mono text-text-dim uppercase">ID</label><input type="text" value="MS3-ADMIN" class="w-full bg-black/50 border border-white/10 rounded p-2 text-white font-mono focus:border-neon-blue outline-none" readonly></div>
+                <div><label class="text-[10px] font-mono text-text-dim uppercase">KEY</label><input type="password" value="••••••••••••" class="w-full bg-black/50 border border-white/10 rounded p-2 text-white font-mono focus:border-neon-blue outline-none" readonly></div>
+                <button onclick="authenticate()" class="w-full bg-neon-blue/10 border border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-black py-2 font-bold tracking-widest transition uppercase text-xs">Access Portal</button>
                 <button onclick="closeLoginModal()" class="w-full text-text-dim hover:text-white py-2 text-[10px] uppercase">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- MAIN APP CONTAINER -->
-    <div id="app-root">
-        
-        <!-- VIEW 1: MARKETING LANDING PAGE -->
-        <div id="landing-view">
-            <nav class="fixed w-full z-50 top-8 bg-void/60 backdrop-blur-xl border-b border-white/5">
-                <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-                    <span class="font-bold text-xl text-white tracking-[0.15em]">HAKILIX<span class="text-neon-blue">.LABS</span></span>
-                    <div class="hidden md:flex items-center gap-6 text-xs font-mono tracking-widest text-text-dim">
-                        <a href="#vision" class="hover:text-neon-blue transition">VISION</a>
-                        <a href="#reablement" class="hover:text-neon-blue transition">REABLEMENT</a>
-                        <a href="#bridge" class="hover:text-neon-blue transition">HOME-BRIDGE</a>
-                        <a href="#architecture" class="hover:text-neon-blue transition">TECH</a>
-                        <button onclick="openLoginModal()" class="border border-neon-green/50 text-neon-green px-4 py-2 hover:bg-neon-green hover:text-black transition uppercase font-bold bg-neon-green/5 text-xs">Agency Login</button>
-                    </div>
-                </div>
-            </nav>
 
-            <header class="relative pt-48 pb-32" id="vision">
-                <div class="max-w-7xl mx-auto px-6 relative z-10">
-                    <div class="grid lg:grid-cols-2 gap-20 items-center">
-                        <div data-aos="fade-right">
-                            <div class="inline-flex items-center gap-3 mb-6 px-3 py-1 border border-neon-green/30 bg-neon-green/5 text-neon-green font-mono text-[10px] tracking-widest uppercase"><span class="w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse"></span> TRL 4 Validated | Phase 2</div>
-                            <h1 class="text-5xl lg:text-7xl font-bold text-white leading-[1.1] mb-6">Autonomous <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue via-white to-neon-purple text-glow-blue">Bio-Digital Twinning.</span></h1>
-                            <p class="text-lg text-text-dim mb-10 font-light leading-relaxed max-w-xl">
-                                Solving the "Privacy Paradox" in Geriatric Care. We fuse <strong>Advanced Sensor Modalities</strong> with <strong>Edge Intelligence</strong> to create a privacy-preserving holographic twin of patient physiology.
-                            </p>
-                            <div class="flex gap-4"><button onclick="openLoginModal()" class="glass-panel px-6 py-3 text-white font-mono text-xs hover:bg-neon-blue hover:text-black transition border-l-2 border-l-neon-blue">VIEW DEMO</button><a href="#contact" class="px-6 py-3 text-text-dim hover:text-white font-mono text-xs border border-white/10 transition">CONTACT</a></div>
-                        </div>
-                        <div class="relative w-full perspective-1000" data-aos="zoom-in" data-aos-delay="200">
-                            <div class="absolute inset-0 bg-neon-blue blur-[150px] opacity-10 animate-pulse"></div>
-                            <div class="glass-panel p-1 rounded-lg relative overflow-hidden animate-float h-80 flex items-center justify-center bg-black/80 border-neon-blue/30">
-                                <div class="absolute top-2 left-3 z-10">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
-                                        <span class="text-[10px] font-mono text-neon-blue tracking-widest">LIVE_TWIN_FEED</span>
-                                    </div>
-                                </div>
-                                <div id="landing-radar-container" class="w-full h-full relative flex items-center justify-center">
-                                    <!-- Simple Radar Animation for Landing -->
-                                    <div class="w-48 h-48 border border-neon-blue/30 rounded-full relative flex items-center justify-center">
-                                        <div class="absolute inset-0 border-t border-neon-blue/50 animate-radar-spin rounded-full"></div>
-                                        <div class="w-1 h-1 bg-white rounded-full"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-            
-            <!-- (Other Landing Sections Preserved via JS logic implicitly or simplified here for file size safety) -->
-            <section id="contact" class="py-20 border-t border-white/5 bg-panel/50">
-                <div class="max-w-7xl mx-auto px-6 text-center">
-                    <h2 class="text-neon-green font-mono text-xs tracking-[0.2em] mb-4">// 03_COMMUNICATION_UPLINK</h2>
-                    <h3 class="text-3xl font-bold text-white mb-12">Strategic Partnerships</h3>
-                    <div class="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                        <div class="glass-panel p-8 rounded hover:border-neon-blue/50 transition"><h4 class="text-white font-bold mb-1">Clinical Trials</h4><p class="text-xs text-text-dim mb-4">NHS Trusts</p></div>
-                        <div class="glass-panel p-8 rounded hover:border-neon-purple/50 transition"><h4 class="text-white font-bold mb-1">Investors</h4><p class="text-xs text-text-dim mb-4">Seed Stage</p></div>
-                        <div class="glass-panel p-8 rounded hover:border-neon-green/50 transition"><h4 class="text-white font-bold mb-1">General</h4><p class="text-xs text-text-dim mb-4">Media</p></div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- VIEW 2: AGENCY PORTAL (COMMAND CENTER - REDESIGNED) -->
-        <div id="agency-view" class="hidden h-screen bg-[#050505] text-gray-300 font-mono flex flex-col overflow-hidden">
-            
-            <!-- 1. HEADER (Non-Sticky, Flex Child) -->
-            <div class="h-12 border-b border-gray-800 flex justify-between items-center px-4 bg-[#0a0a0f] z-20 shrink-0">
-                <div class="flex items-center gap-6">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="activity" class="text-neon-green w-4 h-4"></i>
-                        <span class="font-bold text-sm text-white tracking-[0.2em]">HAKILIX<span class="text-neon-green">.CMD</span></span>
-                    </div>
-                    <div class="hidden md:flex gap-6 text-[10px] text-gray-500 tracking-widest border-l border-gray-800 pl-6">
-                        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-neon-green rounded-full"></span> NET: STABLE</div>
-                        <div class="flex items-center gap-2"><i data-lucide="lock" class="w-3 h-3 text-neon-blue"></i> AES-256</div>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div class="text-right">
-                        <div class="text-[9px] text-gray-600 uppercase">Operator</div>
-                        <div class="text-[10px] font-bold text-neon-blue">MS3-ADMIN</div>
-                    </div>
-                    <button onclick="closeAgencyMode()" class="bg-red-900/10 hover:bg-red-900/30 text-red-500 border border-red-900/30 px-3 py-1 text-[10px] uppercase transition tracking-wider">Logout</button>
-                </div>
-            </div>
-
-            <!-- 2. MAIN CONTENT (Flex Grow) -->
-            <div class="flex-1 flex overflow-hidden">
-                
-                <!-- LEFT: FLEET TRIAGE -->
-                <div class="w-64 border-r border-gray-800 bg-[#08080a] flex flex-col shrink-0">
-                    <div class="p-3 border-b border-gray-800 bg-gray-900/30">
-                        <h4 class="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Fleet Overview</h4>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div class="bg-red-500/10 border border-red-500/20 p-2 rounded text-center">
-                                <span class="text-lg font-bold text-red-500 block leading-none">1</span>
-                                <span class="text-[9px] text-red-400/70 uppercase">Critical</span>
-                            </div>
-                            <div class="bg-green-500/10 border border-green-500/20 p-2 rounded text-center">
-                                <span class="text-lg font-bold text-green-500 block leading-none">84</span>
-                                <span class="text-[9px] text-green-400/70 uppercase">Stable</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Search -->
-                    <div class="p-2 border-b border-gray-800">
-                        <div class="relative">
-                            <i data-lucide="search" class="absolute left-2 top-2 w-3 h-3 text-gray-600"></i>
-                            <input type="text" placeholder="FILTER ID..." class="w-full bg-black border border-gray-800 pl-7 p-1.5 text-[10px] text-white focus:border-neon-blue outline-none rounded-sm">
-                        </div>
-                    </div>
-
-                    <!-- List -->
-                    <div id="patient-list" class="flex-grow overflow-y-auto custom-scrollbar p-2">
-                        <!-- JS Injected -->
-                    </div>
-                </div>
-
-                <!-- CENTER: TACTICAL MAP (2D) -->
-                <div class="flex-1 bg-black relative flex flex-col border-r border-gray-800">
-                    
-                    <!-- Alert Banner -->
-                    <div id="alert-banner" class="absolute top-4 left-4 right-4 z-20 bg-red-950/90 border border-red-600/50 p-2 flex justify-between items-center backdrop-blur-md shadow-[0_0_30px_rgba(220,38,38,0.2)] animate-pulse">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-red-600 p-1 rounded-sm"><i data-lucide="alert-triangle" class="text-white w-3 h-3"></i></div>
-                            <div>
-                                <h4 class="text-white font-bold text-xs tracking-wider">ANOMALY: HKLX-09</h4>
-                                <p class="text-[9px] text-red-300">Kinematic Impact > 4.5G</p>
-                            </div>
-                        </div>
-                        <button onclick="simulateDispatch()" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest transition">Dispatch</button>
-                    </div>
-
-                    <!-- 2D TACTICAL MAP CONTAINER -->
-                    <div class="flex-grow relative bg-[#020202] tactical-grid overflow-hidden flex items-center justify-center">
-                        <div class="absolute top-2 left-2 text-[10px] text-gray-500 font-mono">SECTOR VIEW: LIVING QUARTERS</div>
-                        <canvas id="tactical-map" class="w-full h-full"></canvas>
-                    </div>
-
-                    <!-- BOTTOM: VITALS CHART -->
-                    <div class="h-48 bg-[#08080a] border-t border-gray-800 p-3 flex flex-col shrink-0">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-[9px] text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                                <i data-lucide="activity" class="w-3 h-3 text-neon-green"></i> Micro-Tremor Analysis
-                            </span>
-                            <span class="text-[9px] text-neon-green">LIVE</span>
-                        </div>
-                        <div class="relative flex-grow border border-gray-800/50 bg-black/20 rounded-sm">
-                            <canvas id="vitals-chart" class="absolute inset-0 w-full h-full"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- RIGHT: DATA LOGS -->
-                <div class="w-64 bg-[#030305] border-l border-gray-800 flex flex-col font-mono shrink-0">
-                    <div class="p-2 border-b border-gray-800 bg-gray-900/10 flex items-center gap-2">
-                        <i data-lucide="server" class="w-3 h-3 text-neon-purple"></i>
-                        <span class="text-[10px] text-white uppercase tracking-widest">FHIR Uplink</span>
-                    </div>
-                    <div id="backend-terminal" class="flex-grow p-2 overflow-y-auto space-y-2 text-[10px] opacity-90 custom-scrollbar">
-                        <!-- Logs -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- FOOTER -->
-    <footer class="py-8 border-t border-white/5 bg-void text-center relative z-10" id="main-footer">
-        <div class="flex flex-col items-center gap-2"><span class="font-bold text-xl text-white tracking-[0.2em]">HAKILIX<span class="text-neon-blue">.LABS</span></span><p class="text-text-dim text-[10px] font-mono">© 2025 Hakilix Labs UK Ltd.</p></div>
-    </footer>
-
-    <!-- LOGIC -->
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        // © 2025 HAKILIX LABS | PRINCIPAL ARCHITECT: MS3
-        
-        let simulationInterval, chartInterval, mapInterval;
-        let mapCanvas, mapCtx;
+        lucide.createIcons();
+        let isAgencyView = false;
+        let ws;
+        let allPatients = [];
+        let editingId = null;
 
         function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
         function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
-
-        function authenticate() {
-            closeLoginModal();
-            document.getElementById('landing-view').classList.add('hidden');
-            document.getElementById('main-footer').classList.add('hidden');
-            document.getElementById('agency-view').classList.remove('hidden');
-            initPortalSimulation();
-            setTimeout(() => {
-                startTacticalMap(); // 2D Map
-                startChart();
-            }, 100);
-        }
-
-        function closeAgencyMode() {
-            document.getElementById('agency-view').classList.add('hidden');
-            document.getElementById('landing-view').classList.remove('hidden');
-            document.getElementById('main-footer').classList.remove('hidden');
-            clearInterval(simulationInterval);
-            clearInterval(chartInterval);
-            clearInterval(mapInterval);
-        }
-
-        function initPortalSimulation() {
-            const list = document.getElementById('patient-list');
-            if(list.children.length === 0) {
-                const patients = [
-                    { id: 'HKLX-01', status: 'green', loc: 'Sec A' },
-                    { id: 'HKLX-09', status: 'red', loc: 'Sec C' },
-                    { id: 'HKLX-12', status: 'amber', loc: 'Sec A' },
-                    { id: 'HKLX-15', status: 'green', loc: 'Sec D' },
-                    { id: 'HKLX-18', status: 'green', loc: 'Sec E' },
-                    { id: 'HKLX-22', status: 'green', loc: 'Sec F' },
-                ];
-                list.innerHTML = patients.map(p => `
-                    <div class="p-2 border-b border-gray-800 dash-row cursor-pointer transition flex justify-between items-center group">
-                        <div class="flex items-center gap-2">
-                            <span class="status-dot status-${p.status}"></span>
-                            <span class="text-gray-300 font-bold text-[10px] group-hover:text-white">${p.id}</span>
-                        </div>
-                        <div class="text-[9px] text-gray-600">${p.loc}</div>
-                    </div>`).join('');
-                lucide.createIcons();
+        function authenticate() { closeLoginModal(); document.getElementById('landing-view').classList.add('hidden'); document.getElementById('agency-view').classList.remove('hidden'); initDashboard(); }
+        function closeAgencyMode() { document.getElementById('agency-view').classList.add('hidden'); document.getElementById('landing-view').classList.remove('hidden'); }
+        
+        function openPatientModal(id = null) {
+            editingId = id;
+            const modal = document.getElementById('patient-modal');
+            const title = document.getElementById('modal-title');
+            if (id) {
+                title.innerText = "Edit Unit Config";
+                const p = allPatients.find(x => x.patient_id === id);
+                if(p) {
+                    document.getElementById('p-id').value = p.patient_id;
+                    document.getElementById('p-id').disabled = true; 
+                    document.getElementById('p-name').value = p.display_name;
+                    document.getElementById('p-loc').value = p.living_setting;
+                    document.getElementById('p-focus').value = p.clinical_focus || '';
+                }
+            } else {
+                title.innerText = "Register New Unit";
+                document.getElementById('p-id').value = "HKLX-" + Math.floor(Math.random()*1000);
+                document.getElementById('p-id').disabled = false;
+                document.getElementById('p-name').value = "";
+                document.getElementById('p-loc').value = "";
+                document.getElementById('p-focus').value = "";
             }
-            const term = document.getElementById('backend-terminal');
-            simulationInterval = setInterval(() => {
-                const endpoints = ['POST /telemetry', 'GET /fhir/Obs'];
-                const time = new Date().toISOString().split('T')[1].split('.')[0];
-                const msg = `<div class="border-l-2 border-gray-800 pl-1 text-gray-400">
-                    <span class="text-[9px]">${time}</span> <span class="text-neon-purple">${endpoints[Math.floor(Math.random()*2)]}</span> <span class="text-green-500">200</span>
-                </div>`;
-                term.insertAdjacentHTML('afterbegin', msg);
-                if(term.children.length > 12) term.lastChild.remove();
-            }, 1200);
+            modal.classList.remove('hidden');
         }
 
-        function simulateDispatch() {
-            const term = document.getElementById('backend-terminal');
-            const time = new Date().toISOString().split('T')[1].split('.')[0];
-            const msg = `<div class="border-l-2 border-red-600 bg-red-900/20 pl-2 p-1 text-white">
-                <span class="text-red-500 font-bold">>> DISPATCH SENT</span> Unit 09
-            </div>`;
-            term.insertAdjacentHTML('afterbegin', msg);
-            const btn = document.querySelector('#alert-banner button');
-            btn.innerText = "EN ROUTE"; btn.className = "bg-gray-800 text-gray-400 border border-gray-700 px-3 py-1 text-[10px] font-bold uppercase tracking-widest cursor-not-allowed";
-        }
+        function closePatientModal() { document.getElementById('patient-modal').classList.add('hidden'); editingId = null; }
 
-        // --- 2D TACTICAL MAP (Canvas) ---
-        function startTacticalMap() {
-            mapCanvas = document.getElementById('tactical-map');
-            mapCtx = mapCanvas.getContext('2d');
-            
-            function resizeMap() {
-                mapCanvas.width = mapCanvas.parentElement.clientWidth;
-                mapCanvas.height = mapCanvas.parentElement.clientHeight;
+        async function savePatient() {
+            const id = document.getElementById('p-id').value;
+            const name = document.getElementById('p-name').value;
+            const loc = document.getElementById('p-loc').value;
+            const focus = document.getElementById('p-focus').value;
+
+            const payload = {
+                patient_id: id, display_name: name, living_setting: loc, clinical_focus: focus, year_of_birth: 1950, programme: "Standard Monitoring"
+            };
+
+            const method = editingId ? 'PUT' : 'POST';
+            const url = editingId ? `http://127.0.0.1:8080/api/patients/${id}` : `http://127.0.0.1:8080/api/patients`;
+
+            try {
+                const res = await fetch(url, { method: method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                if (res.ok) { closePatientModal(); fetchPatients(); } else { alert("Error saving patient"); }
+            } catch (e) {
+                console.error("API Error", e);
+                if(!editingId) { allPatients.push(payload); } else { const idx = allPatients.findIndex(p => p.patient_id === editingId); if(idx !== -1) allPatients[idx] = payload; }
+                renderPatientGrid(allPatients); closePatientModal();
             }
-            window.addEventListener('resize', resizeMap);
-            resizeMap();
-
-            let targetX = mapCanvas.width * 0.6;
-            let targetY = mapCanvas.height * 0.4;
-            let pulse = 0;
-
-            function drawMap() {
-                if(!mapCtx) return;
-                const w = mapCanvas.width;
-                const h = mapCanvas.height;
-                mapCtx.clearRect(0,0,w,h);
-
-                // Draw Room Layout (Simple Lines)
-                mapCtx.strokeStyle = '#333';
-                mapCtx.lineWidth = 2;
-                mapCtx.beginPath();
-                mapCtx.rect(w*0.1, h*0.1, w*0.8, h*0.8); // Outer walls
-                mapCtx.moveTo(w*0.5, h*0.1); mapCtx.lineTo(w*0.5, h*0.9); // Center wall
-                mapCtx.stroke();
-
-                // Draw Target (Red Dot)
-                mapCtx.fillStyle = '#ff003c';
-                mapCtx.beginPath();
-                mapCtx.arc(targetX, targetY, 4, 0, Math.PI*2);
-                mapCtx.fill();
-
-                // Pulse Effect
-                pulse += 0.05;
-                mapCtx.strokeStyle = `rgba(255, 0, 60, ${Math.abs(Math.sin(pulse)) * 0.5})`;
-                mapCtx.beginPath();
-                mapCtx.arc(targetX, targetY, 15 + Math.sin(pulse)*5, 0, Math.PI*2);
-                mapCtx.stroke();
-
-                // Target Label
-                mapCtx.fillStyle = '#fff';
-                mapCtx.font = '10px monospace';
-                mapCtx.fillText('HKLX-09 (FALL)', targetX + 10, targetY);
-            }
-            mapInterval = setInterval(drawMap, 50);
         }
 
-        // --- VITALS CHART ---
-        function startChart() {
-            const canvas = document.getElementById('vitals-chart');
-            const ctx = canvas.getContext('2d');
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width; canvas.height = rect.height;
-            let data = new Array(Math.floor(canvas.width / 5)).fill(50);
-            
-            function draw() {
-                ctx.clearRect(0,0,canvas.width, canvas.height);
-                ctx.beginPath();
-                ctx.strokeStyle = '#00ff9d'; ctx.lineWidth = 1.5;
-                data.push(50 + (Math.random() - 0.5) * 30); data.shift();
-                data.forEach((y, i) => {
-                    const x = i * 5;
-                    const mapY = canvas.height - (y / 100 * canvas.height);
-                    if(i===0) ctx.moveTo(x, mapY); else ctx.lineTo(x, mapY);
-                });
-                ctx.stroke();
-            }
-            if(chartInterval) clearInterval(chartInterval);
-            chartInterval = setInterval(draw, 50);
-            window.addEventListener('resize', () => { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; });
+        async function deletePatient(id) {
+            if(!confirm("Are you sure you want to decommission this unit?")) return;
+            try { await fetch(`http://127.0.0.1:8080/api/patients/${id}`, { method: 'DELETE' }); fetchPatients(); } 
+            catch(e) { allPatients = allPatients.filter(p => p.patient_id !== id); renderPatientGrid(allPatients); }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            lucide.createIcons(); if (typeof AOS !== 'undefined') AOS.init({ once: true, duration: 1000 });
-        });
+        function initDashboard() { fetchPatients(); renderMiniChart(); connectWebSocket(); }
+
+        function connectWebSocket() {
+            const statusEl = document.getElementById('socket-status');
+            const logs = document.getElementById('logs-container');
+            const banner = document.getElementById('alert-banner');
+            const critCount = document.getElementById('crit-count');
+
+            let wsUrl = "ws://127.0.0.1:8080/ws";
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => { statusEl.innerHTML = '<span class="text-green-500">●</span> SOCKET: CONNECTED'; const logItem = document.createElement('div'); logItem.innerHTML = `<span class="text-green-400">>> Secure Uplink Established</span>`; logs.prepend(logItem); };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const t = new Date().toLocaleTimeString();
+                const logItem = document.createElement('div');
+                if (data.type === "CRITICAL_FALL") {
+                    logItem.innerHTML = `<span class="text-slate-600">${t}</span> <span class="text-red-500 font-bold">ALERT: ${data.patient_id}</span>`;
+                    banner.classList.remove('hidden');
+                    critCount.innerText = "1";
+                    highlightPatient(data.patient_id, "FALL");
+                } else {
+                    updatePatientStatus(data);
+                    logItem.innerHTML = `<span class="text-slate-600">${t}</span> <span class="text-sky-400">DATA: ${data.patient_id}</span> <span class="text-green-500">${data.details?.status || "Live"}</span>`;
+                }
+                logs.prepend(logItem);
+                if(logs.children.length > 20) logs.lastChild.remove();
+            };
+            ws.onclose = () => { statusEl.innerHTML = '<span class="text-yellow-500">●</span> SOCKET: RECONNECTING...'; setTimeout(connectWebSocket, 3000); };
+        }
+
+        async function fetchPatients() {
+            try {
+                const res = await fetch('http://127.0.0.1:8080/api/patients');
+                if (res.ok) { allPatients = await res.json(); } else { throw new Error("API Fail"); }
+                document.getElementById('total-patients').innerText = allPatients.length;
+                renderPatientGrid(allPatients);
+            } catch (e) {
+                console.log("Backend offline, loading demo data");
+                allPatients = [ {patient_id: 'HKLX-09', display_name: 'Martha B.', living_setting: 'Living Room', status: 'STABLE', risk: 80, hr: 72}, {patient_id: 'HKLX-01', display_name: 'Arthur T.', living_setting: 'Kitchen', status: 'STABLE', risk: 20, hr: 68} ];
+                renderPatientGrid(allPatients);
+            }
+        }
+        
+        function updatePatientStatus(data) {
+            const card = document.getElementById(`card-${data.patient_id}`);
+            if (card && data.details && data.details.status) {
+                const badge = card.querySelector('.status-badge');
+                badge.innerText = data.details.status;
+                if(data.details.status.includes('Walking') || data.details.status.includes('Standing')) { badge.className = "px-1.5 py-0.5 rounded text-[9px] font-bold bg-green-500/20 text-green-400 status-badge"; } 
+                else if(data.details.status.includes('Lying')) { badge.className = "px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/20 text-purple-400 status-badge"; } 
+                else if(data.details.status.includes('Wandering')) { badge.className = "px-1.5 py-0.5 rounded text-[9px] font-bold bg-yellow-500/20 text-yellow-400 status-badge animate-pulse"; }
+            }
+        }
+
+        function renderPatientGrid(patients) {
+            const grid = document.getElementById('patient-grid');
+            grid.innerHTML = '';
+            patients.forEach(p => {
+                const name = p.display_name || `Resident ${p.patient_id}`;
+                const status = p.status || "WAITING..."; 
+                const risk = 20; const hr = 70;
+                const card = document.createElement('div');
+                card.id = `card-${p.patient_id}`;
+                card.className = `card p-4 flex flex-col gap-3 relative overflow-hidden transition-all border-slate-800 group`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start relative z-10"><div><div class="font-bold text-sm text-white">${name}</div><div class="text-[10px] text-slate-500 font-mono">${p.patient_id}</div></div><span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-800 text-slate-400 status-badge">${status}</span></div>
+                    <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-400 relative z-10"><div>LOC: <span class="text-slate-200">${p.living_setting}</span></div><div>HR: <span class="text-slate-200">${hr} bpm</span></div></div>
+                    <div class="mt-auto pt-2 border-t border-white/5 relative z-10"><div class="flex justify-between text-[9px] mb-1"><span class="text-slate-500">FALL RISK</span><span class="text-slate-300">${risk}%</span></div><div class="w-full h-1 bg-slate-800 rounded overflow-hidden"><div class="h-full bg-green-500" style="width: ${risk}%"></div></div></div>
+                    <div class="absolute top-2 right-2 flex gap-1"><button onclick="openPatientModal('${p.patient_id}')" class="p-1 bg-slate-700/80 rounded hover:bg-primary hover:text-white text-slate-300 transition"><i data-lucide="edit-2" class="w-3 h-3"></i></button><button onclick="deletePatient('${p.patient_id}')" class="p-1 bg-slate-700/80 rounded hover:bg-red-600 hover:text-white text-slate-300 transition"><i data-lucide="trash" class="w-3 h-3"></i></button></div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+        
+        function filterPatients() {
+            const query = document.getElementById('patient-search').value.toUpperCase();
+            const filtered = allPatients.filter(p => p.patient_id.toUpperCase().includes(query) || (p.display_name && p.display_name.toUpperCase().includes(query)));
+            renderPatientGrid(filtered);
+        }
+
+        function highlightPatient(id, type) {
+            const card = document.getElementById(`card-${id}`);
+            if(card) {
+                card.className = "card p-4 flex flex-col gap-3 relative overflow-hidden transition-all border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)] bg-red-900/10";
+                const badge = card.querySelector('.status-badge');
+                badge.className = "px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-600 text-white shadow-sm";
+                badge.innerText = "CRITICAL - FALL";
+            }
+        }
+
+        function ackAlert() { document.getElementById('alert-banner').classList.add('hidden'); }
+
+        function renderMiniChart() {
+            const ctx = document.getElementById('uptime-chart').getContext('2d');
+            new Chart(ctx, { type: 'line', data: { labels: [1,2,3,4,5,6,7], datasets: [{ data: [65, 59, 80, 81, 56, 55, 40], borderColor: '#0ea5e9', borderWidth: 1.5, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: 'rgba(14, 165, 233, 0.1)' }] }, options: { plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } }, maintainAspectRatio: false } });
+        }
     </script>
 </body>
 </html>

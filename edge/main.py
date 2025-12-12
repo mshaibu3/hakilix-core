@@ -1,96 +1,64 @@
-# ==============================================================================
-# PROJECT: HAKILIX CORE | EDGE INFERENCE NODE (v3.3 - HIGH SENSITIVITY)
-# COMPONENT: NEUROMORPHIC SENSOR FUSION
-# COPYRIGHT: © 2025 HAKILIX LABS UK LTD.
-# PRINCIPAL ARCHITECT: MUSAH SHAIBU (MS3)
-# LICENSE: PROPRIETARY & CONFIDENTIAL.
-# ==============================================================================
-
-import time
-import random
-import logging
-import math
-import sys
+import time, random, logging, requests
 from datetime import datetime
+from collections import deque
 
-# --- CONFIGURATION ---
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s | Hakilix.Edge    | %(levelname)-8s | %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger("Hakilix")
+logging.basicConfig(level=logging.INFO, format='%(asctime)s | Hakilix.Edge | %(levelname)s | %(message)s')
+BACKEND_URL = "http://127.0.0.1:8080/api/ingest"
+DEVICE_ID = "HKLX-01" 
+API_KEY = "hakilix-secret-key-v1"
 
-class NeuromorphicSensor:
-    def __init__(self):
-        self.ax = 0.0
-        self.ay = 0.0
-        self.az = 0.98 # Gravity (1G)
+# Offline Buffer
+offline_queue = deque(maxlen=100)
 
-    def read_telemetry(self, trigger_fall=False):
-        if trigger_fall:
-            # SIMULATE HIGH IMPACT (Hard Fall)
-            return {'ax': 4.1, 'ay': 1.5, 'az': 0.2, 'temp': 36.8}
-        else:
-            return {'ax': random.uniform(-0.05, 0.05), 'ay': random.uniform(-0.05, 0.05), 'az': 0.98 + random.uniform(-0.02, 0.02), 'temp': 36.5}
+def run():
+    print("--- HAKILIX EDGE SENSOR ACTIVE (RESILIENT MODE) ---")
+    states = ["Seated", "Walking", "Lying", "Wandering"]
+    current_state = "Seated"
+    state_timer = 0
+    
+    while True:
+        # Simulate State
+        state_timer += 1
+        if state_timer > 10:
+            current_state = random.choice(states)
+            state_timer = 0
+            print(f"[Behavior Change] Patient is now: {current_state}")
 
-class InferenceEngine:
-    def __init__(self, threshold=2.5):
-        self.threshold = threshold
-        self.membrane_potential = 0.0
+        accel = 0.98; posture = 90; energy = 0.0; zone = "living_room"
         
-    def process_frame(self, data):
-        magnitude = math.sqrt(data['ax']**2 + data['ay']**2 + data['az']**2)
-        if magnitude > self.threshold:
-            self.membrane_potential += 1.5
-        else:
-            self.membrane_potential *= 0.5
-        if self.membrane_potential >= 1.0:
-            return True, magnitude
-        return False, magnitude
-
-def run_edge_node():
-    print("==========================================")
-    print("   HAKILIX CORE - NEUROMORPHIC EDGE AI    ")
-    print("   (C) 2025 HAKILIX LABS UK LTD | MS3     ")
-    print("==========================================")
-    
-    sensor = NeuromorphicSensor()
-    ai_core = InferenceEngine(threshold=2.5) 
-    
-    logger.info("Initializing Sensor Array [mmWave + Thermal]...")
-    time.sleep(1)
-    logger.info("SYSTEM ONLINE. LISTENING FOR KINEMATIC EVENTS.")
-    
-    tick = 0
-    FALL_TRIGGER_AT = 5
-    
-    try:
-        while True:
-            time.sleep(1.0)
-            tick += 1
-            try:
-                is_anomaly_time = (tick == FALL_TRIGGER_AT)
-                if is_anomaly_time:
-                    logger.warning(">>> SIMULATING KINEMATIC IMPACT EVENT...")
-                
-                data = sensor.read_telemetry(trigger_fall=is_anomaly_time)
-                is_fall, mag = ai_core.process_frame(data)
-                
-                if is_fall:
-                    logger.critical(f"FALL DETECTED [Impact: {mag:.2f}G] | Confidence: 99%")
-                    logger.critical(f"Writing to Firestore: /artifacts/alerts/FALL")
-                    time.sleep(2)
-                    logger.info("System Stabilizing...")
-                    tick = 0 
-                    ai_core.membrane_potential = 0.0
-                else:
-                    logger.info(f"Monitoring... System Nominal. [Vector: {mag:.2f}G]")
-            except Exception as e:
-                logger.error(f"Error: {e}")
-                continue
-    except KeyboardInterrupt:
-        sys.exit(0)
+        if current_state == "Seated": posture = 45; energy = 0.05
+        elif current_state == "Walking": posture = 85; energy = 0.4
+        elif current_state == "Lying": posture = 10; energy = 0.01; zone = "bedroom"
+        elif current_state == "Wandering": posture = 80; energy = 0.9; zone = "hallway"
+        
+        payload = {
+            "patient_id": DEVICE_ID,
+            "frames": [{
+                "vertical_accel_g": accel,
+                "posture_angle_deg": posture,
+                "movement_energy": energy,
+                "zone": zone
+            }]
+        }
+        
+        # Try sending
+        try:
+            # Check if we have buffered items
+            while offline_queue:
+                print(f"[RECOVERY] Flushing buffer... ({len(offline_queue)} items)")
+                old_payload = offline_queue[0]
+                requests.post(BACKEND_URL, json=old_payload, headers={"x-api-key": API_KEY}, timeout=1.0)
+                offline_queue.popleft() # Remove if successful
+            
+            # Send current
+            requests.post(BACKEND_URL, json=payload, headers={"x-api-key": API_KEY}, timeout=1.0)
+            
+        except Exception as e:
+            print(f"[NETWORK ERROR] Backend unreachable. Buffering data... (Buffer size: {len(offline_queue)})")
+            offline_queue.append(payload)
+        
+        time.sleep(1.0)
 
 if __name__ == "__main__":
-    run_edge_node()
+    try: run()
+    except KeyboardInterrupt: print("\n[Edge] Shutting down.")
