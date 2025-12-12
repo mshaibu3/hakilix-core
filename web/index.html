@@ -206,15 +206,18 @@
         let allPatients = [];
         let editingId = null;
 
+        // --- AUTH LOGIC ---
         function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
         function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
         function authenticate() { closeLoginModal(); document.getElementById('landing-view').classList.add('hidden'); document.getElementById('agency-view').classList.remove('hidden'); initDashboard(); }
         function closeAgencyMode() { document.getElementById('agency-view').classList.add('hidden'); document.getElementById('landing-view').classList.remove('hidden'); }
         
+        // --- CRUD LOGIC ---
         function openPatientModal(id = null) {
             editingId = id;
             const modal = document.getElementById('patient-modal');
             const title = document.getElementById('modal-title');
+            
             if (id) {
                 title.innerText = "Edit Unit Config";
                 const p = allPatients.find(x => x.patient_id === id);
