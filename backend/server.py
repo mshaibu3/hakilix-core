@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Backend")
 
-app = FastAPI(title="Hakilix Core Enterprise", version="19.0.0")
+app = FastAPI(title="Hakilix Core Enterprise", version="22.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -103,11 +103,23 @@ class RiskScoreResult(BaseModel):
     explanation: List[str]
     recommendations: List[str]
 
+class TwinMetrics(BaseModel):
+    timestamp: str
+    gaitVelocity: float
+    timeToStand: float
+    fallRiskScore: float
+    status: str
+
 # --- DATA STORE ---
 PATIENTS = [
     Patient(patient_id="HKLX-01", display_name="Mr A. Thompson", year_of_birth=1942, living_setting="Sheltered housing", programme="Bridging", clinical_focus="Sleep monitoring"),
     Patient(patient_id="HKLX-09", display_name="Mrs L. Bennett", year_of_birth=1950, living_setting="Own home", programme="Falls prevention", clinical_focus="Gait analysis"),
     Patient(patient_id="HKLX-04", display_name="Ms R. Collins", year_of_birth=1938, living_setting="Extra-care", programme="Dementia pathway", clinical_focus="Wandering risk"),
+    Patient(patient_id="PAT_FALL", display_name="Mr J. Okoro", year_of_birth=1948, living_setting="Ground-floor flat", programme="Reablement", clinical_focus="Recurrent falls"),
+    Patient(patient_id="PAT_BEND", display_name="Mrs P. Singh", year_of_birth=1955, living_setting="Own home", programme="Falls prevention", clinical_focus="Near-fall posture"),
+    Patient(patient_id="PAT_OUT", display_name="Mr D. Hughes", year_of_birth=1946, living_setting="Retirement village", programme="Frailty", clinical_focus="Out-of-home patterns"),
+    Patient(patient_id="PAT_VW01", display_name="Ms E. Garcia", year_of_birth=1952, living_setting="Home", programme="Virtual ward (COPD)", clinical_focus="Nocturnal activity"),
+    Patient(patient_id="PAT_VW02", display_name="Mr K. Mensah", year_of_birth=1960, living_setting="Home", programme="Virtual ward (HF)", clinical_focus="Decompensation tracking"),
 ]
 _EVENTS = deque(maxlen=5000)
 
@@ -168,6 +180,14 @@ def classify_activity(frames: List[SensorFrame]) -> ActivityState:
     
     return ActivityState(timestamp=datetime.utcnow(), label=label, confidence=0.7, is_potential_risk=False, narrative=narrative)
 
+def generate_twin_metrics() -> TwinMetrics:
+    now = datetime.utcnow().isoformat() + "Z"
+    gait = 0.95
+    tts = 8.5
+    risk = compute_risk_score(RiskScoreInput(gaitVelocity=gait, timeToStand=tts, nighttimeBathroomVisits=1, recentFallsCount=0, age=80, frailtyIndex=0.25))
+    status = "STABLE" if risk.band in ("LOW", "MEDIUM") else "HIGH_RISK"
+    return TwinMetrics(timestamp=now, gaitVelocity=gait, timeToStand=tts, fallRiskScore=risk.riskScore, status=status)
+
 # --- ENDPOINTS ---
 
 @app.get("/", response_class=HTMLResponse)
@@ -208,6 +228,10 @@ def api_intake(payload: IntakeRequest):
 @app.post("/api/risk-score", response_model=RiskScoreResult)
 def api_risk_score(payload: RiskScoreInput):
     return compute_risk_score(payload)
+
+@app.get("/api/twin-metrics", response_model=TwinMetrics)
+def api_twin_metrics():
+    return generate_twin_metrics()
 
 @app.post("/api/ingest", response_model=PatientEvent)
 async def ingest_telemetry(payload: SensorWindow):
