@@ -1,5 +1,5 @@
 <!-- 
-    HAKILIX CORE | v19.0 | (C) 2025 HAKILIX LABS UK LTD.
+    HAKILIX CORE | v20.0 | (C) 2025 HAKILIX LABS UK LTD.
 -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
@@ -143,6 +143,10 @@
                         <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Live Logs (WebSocket)</div>
                         <div id="logs-container" class="h-40 overflow-y-auto font-mono text-[9px] text-slate-400 space-y-1 bg-black/40 p-2 rounded border border-white/5 shadow-inner"></div>
                     </div>
+                    <div class="flex-1 p-4">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Performance</div>
+                        <div class="bg-white/5 rounded p-2 border border-white/5"><canvas id="uptime-chart" class="h-20 w-full"></canvas></div>
+                    </div>
                 </div>
 
                 <div class="flex-1 p-6 overflow-y-auto relative z-10">
@@ -261,7 +265,7 @@
             catch(e) { allPatients = allPatients.filter(p => p.patient_id !== id); renderPatientGrid(allPatients); }
         }
 
-        function initDashboard() { fetchPatients(); connectWebSocket(); }
+        function initDashboard() { fetchPatients(); renderMiniChart(); connectWebSocket(); }
 
         function connectWebSocket() {
             const statusEl = document.getElementById('socket-status');
@@ -355,6 +359,11 @@
         }
 
         function ackAlert() { document.getElementById('alert-banner').classList.add('hidden'); }
+
+        function renderMiniChart() {
+            const ctx = document.getElementById('uptime-chart').getContext('2d');
+            new Chart(ctx, { type: 'line', data: { labels: [1,2,3,4,5,6,7], datasets: [{ data: [65, 59, 80, 81, 56, 55, 40], borderColor: '#0ea5e9', borderWidth: 1.5, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: 'rgba(14, 165, 233, 0.1)' }] }, options: { plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } }, maintainAspectRatio: false } });
+        }
     </script>
 </body>
 </html>

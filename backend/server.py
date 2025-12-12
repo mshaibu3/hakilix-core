@@ -15,6 +15,7 @@ import uvicorn
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 logging.basicConfig(level=logging.INFO)
@@ -22,7 +23,12 @@ logger = logging.getLogger("Backend")
 
 app = FastAPI(title="Hakilix Core Enterprise", version="19.0.0")
 
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- DATA MODELS (Adapted from hakilix_single.py) ---
 class SensorFrame(BaseModel):
@@ -168,7 +174,8 @@ def classify_activity(frames: List[SensorFrame]) -> ActivityState:
 async def read_root():
     try:
         path = os.path.join(os.path.dirname(__file__), "../web/index.html")
-        with open(path, "r", encoding="utf-8") as f: return f.read()
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
     except: return "<h1>Web Interface Missing</h1>"
 
 @app.get("/api/patients", response_model=List[Patient])
