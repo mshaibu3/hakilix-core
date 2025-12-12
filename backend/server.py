@@ -1,60 +1,57 @@
-import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, BackgroundTasks, Header
-from fastapi.responses import HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import json, logging, os, sqlite3, asyncio
+from __future__ import annotations
+import time
+import json
+import random
+import logging
+import uuid
+import os
+from collections import deque
 from datetime import datetime
 from typing import List, Optional
+from enum import Enum
+from statistics import mean
+
+import uvicorn
+from fastapi import FastAPI, Query, HTTPException
+from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Backend")
 
-app = FastAPI(title="Hakilix Core Enterprise", version="18.0.0")
+app = FastAPI(title="Hakilix Core Enterprise", version="19.0.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-# --- DATABASE ---
-def init_db():
-    conn = sqlite3.connect('hakilix.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY, patient_id TEXT, type TEXT, details TEXT, timestamp TEXT)''')
-    conn.commit()
-    conn.close()
+# --- DATA MODELS (Adapted from hakilix_single.py) ---
+class SensorFrame(BaseModel):
+    timestamp: str
+    vertical_accel_g: float
+    posture_angle_deg: float
+    movement_energy: float
+    zone: Optional[str] = None
+    is_in_bed: bool = False
+    step_rate_hz: Optional[float] = 0.0
 
-def persist_event(event_data):
-    conn = sqlite3.connect('hakilix.db')
-    conn.execute("INSERT INTO events (patient_id, type, details, timestamp) VALUES (?, ?, ?, ?)",
-                 (event_data['patient_id'], event_data['type'], json.dumps(event_data['details']), event_data['timestamp']))
-    conn.commit()
-    conn.close()
-    logger.info(f"[DB] Persisted event for {event_data['patient_id']}")
-
-init_db()
-
-# --- CONNECTION MANAGER ---
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: list[WebSocket] = []
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-    def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            try:
-                await connection.send_text(message)
-            except:
-                self.disconnect(connection)
-
-manager = ConnectionManager()
-
-# --- MODELS ---
 class SensorWindow(BaseModel):
     patient_id: str
-    frames: list
+    frames: List[SensorFrame]
+
+class FallDetectionResult(BaseModel):
+    is_fall: bool
+    confidence: float
+    severity: str
+    reason: List[str]
+    flag_virtual_ward_review: bool
+    time_to_recover_seconds: Optional[float] = None
+
+class ActivityState(BaseModel):
+    timestamp: datetime
+    label: str
+    confidence: float
+    is_potential_risk: bool
+    narrative: List[str]
 
 class Patient(BaseModel):
     patient_id: str
@@ -64,22 +61,115 @@ class Patient(BaseModel):
     programme: str
     clinical_focus: str
 
+class PatientEvent(BaseModel):
+    id: str
+    patient_id: str
+    timestamp: datetime
+    type: str
+    details: dict
+    activity: Optional[ActivityState] = None
+    fall: Optional[FallDetectionResult] = None
+
+class IntakeRequest(BaseModel):
+    organisationType: str
+    organisationName: str
+    contactName: str
+    email: str
+    region: str
+    sizeBand: Optional[str] = ""
+    notes: Optional[str] = ""
+
+class IntakeResponse(BaseModel):
+    ok: bool = True
+    message: str
+
+class RiskScoreInput(BaseModel):
+    gaitVelocity: float = Field(ge=0, le=3)
+    timeToStand: float = Field(ge=0, le=60)
+    nighttimeBathroomVisits: int = Field(ge=0, le=20)
+    recentFallsCount: int = Field(ge=0, le=10)
+    age: int = Field(ge=40, le=110)
+    frailtyIndex: Optional[float] = Field(default=None, ge=0, le=1)
+
+class RiskScoreResult(BaseModel):
+    riskScore: float
+    band: str
+    explanation: List[str]
+    recommendations: List[str]
+
+# --- DATA STORE ---
 PATIENTS = [
-    Patient(patient_id="HKLX-01", display_name="Mr A. Thompson", year_of_birth=1942, living_setting="Living Room", programme="Bridging", clinical_focus="Sleep monitoring"),
-    Patient(patient_id="HKLX-09", display_name="Mrs L. Bennett", year_of_birth=1950, living_setting="Kitchen", programme="Falls prevention", clinical_focus="Gait analysis"),
-    Patient(patient_id="HKLX-04", display_name="Ms R. Collins", year_of_birth=1938, living_setting="Bedroom", programme="Dementia pathway", clinical_focus="Wandering risk"),
+    Patient(patient_id="HKLX-01", display_name="Mr A. Thompson", year_of_birth=1942, living_setting="Sheltered housing", programme="Bridging", clinical_focus="Sleep monitoring"),
+    Patient(patient_id="HKLX-09", display_name="Mrs L. Bennett", year_of_birth=1950, living_setting="Own home", programme="Falls prevention", clinical_focus="Gait analysis"),
+    Patient(patient_id="HKLX-04", display_name="Ms R. Collins", year_of_birth=1938, living_setting="Extra-care", programme="Dementia pathway", clinical_focus="Wandering risk"),
 ]
+_EVENTS = deque(maxlen=5000)
+
+# --- ADVANCED LOGIC (From hakilix_single.py) ---
+
+def compute_risk_score(payload: RiskScoreInput) -> RiskScoreResult:
+    score = 0.0
+    explanation = []
+    recs = []
+
+    if payload.gaitVelocity < 0.6:
+        score += 25
+        explanation.append("Slow gait velocity associated with higher falls risk.")
+    elif payload.gaitVelocity < 1.0:
+        score += 10
+
+    if payload.timeToStand > 20:
+        score += 20
+        explanation.append("Prolonged time to stand suggests deconditioning.")
+    
+    score += min(payload.recentFallsCount * 10, 30)
+    if payload.age >= 85: score += 15
+    elif payload.age >= 75: score += 10
+
+    if score >= 70: band = "HIGH"
+    elif score >= 40: band = "MEDIUM"
+    else: band = "LOW"
+
+    return RiskScoreResult(riskScore=score, band=band, explanation=explanation, recommendations=recs)
+
+def detect_fall_logic(frames: List[SensorFrame]) -> FallDetectionResult:
+    peak_g = max((abs(f.vertical_accel_g) for f in frames), default=0.0)
+    is_fall = False
+    severity = "LOW"
+    conf = 0.0
+    reasons = []
+
+    if peak_g > 2.5:
+        is_fall = True
+        reasons.append(f"High-G impact detected: {peak_g:.2f}g")
+        if peak_g > 3.5:
+            severity = "HIGH"
+            conf = 0.95
+        else:
+            severity = "MEDIUM"
+            conf = 0.8
+
+    return FallDetectionResult(is_fall=is_fall, confidence=conf, severity=severity, reason=reasons, flag_virtual_ward_review=is_fall)
+
+def classify_activity(frames: List[SensorFrame]) -> ActivityState:
+    avg_energy = mean(f.movement_energy for f in frames) if frames else 0.0
+    label = "unknown"
+    narrative = []
+    
+    if avg_energy < 0.05: label = "sleeping" if frames[-1].is_in_bed else "idle"
+    elif avg_energy > 0.3: label = "walking"
+    else: label = "active"
+    
+    return ActivityState(timestamp=datetime.utcnow(), label=label, confidence=0.7, is_potential_risk=False, narrative=narrative)
 
 # --- ENDPOINTS ---
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        path_opt1 = os.path.join(current_dir, "../web/index.html")
-        if os.path.exists(path_opt1):
-            with open(path_opt1, "r", encoding="utf-8") as f: return f.read()
-        return "<h1>Web Interface Missing</h1>"
-    except Exception as e: return f"<h1>Error: {e}</h1>"
+        path = os.path.join(os.path.dirname(__file__), "../web/index.html")
+        with open(path, "r", encoding="utf-8") as f: return f.read()
+    except: return "<h1>Web Interface Missing</h1>"
 
 @app.get("/api/patients", response_model=List[Patient])
 def get_patients(): return PATIENTS
@@ -104,46 +194,50 @@ def delete_patient(patient_id: str):
     PATIENTS = [p for p in PATIENTS if p.patient_id != patient_id]
     return {"status": "deleted"}
 
-@app.post("/api/ingest")
-async def ingest(payload: SensorWindow, background_tasks: BackgroundTasks, x_api_key: Optional[str] = Header(None)):
-    # Simple Auth Check
-    if x_api_key != "hakilix-secret-key-v1":
-        logger.warning("Unauthenticated ingestion attempt.")
-        # Allowing for demo, but normally raise 401
-    
-    frame = payload.frames[0]
-    g_force = abs(frame.get('vertical_accel_g', 0))
-    posture = frame.get('posture_angle_deg', 90)
-    energy = frame.get('movement_energy', 0)
-    zone = frame.get('zone', 'living_room')
-    
-    status = "Stable"
-    evt_type = "TELEMETRY"
-    
-    if g_force > 3.0:
-        status = "CRITICAL FALL"
-        evt_type = "CRITICAL_FALL"
-        logger.critical(f"FALL DETECTED: {payload.patient_id}")
-    elif posture < 30: status = "Lying Down"
-    elif posture > 70 and energy > 0.3: status = "Walking"
-    elif posture > 70 and energy < 0.1: status = "Standing"
-    elif 30 <= posture <= 70: status = "Seated"
-    if energy > 0.8 and zone == "hallway": status = "Wandering (Confused)"
+@app.post("/api/intake", response_model=IntakeResponse)
+def api_intake(payload: IntakeRequest):
+    return IntakeResponse(ok=True, message=f"Received application from {payload.organisationName}")
 
-    event_data = {
-        "patient_id": payload.patient_id,
-        "type": evt_type,
-        "timestamp": datetime.now().isoformat(),
-        "details": {"peak_g": g_force, "status": status}
-    }
+@app.post("/api/risk-score", response_model=RiskScoreResult)
+def api_risk_score(payload: RiskScoreInput):
+    return compute_risk_score(payload)
 
-    # Async Write
-    background_tasks.add_task(persist_event, event_data)
-
-    # Real-time Push
-    await manager.broadcast(json.dumps(event_data))
+@app.post("/api/ingest", response_model=PatientEvent)
+async def ingest_telemetry(payload: SensorWindow):
+    fall_result = detect_fall_logic(payload.frames)
+    activity_result = classify_activity(payload.frames)
     
-    return {"status": "ok"}
+    event_type = "TELEMETRY"
+    if fall_result.is_fall:
+        event_type = "CRITICAL_FALL"
+        logger.critical(f"[ALERT] {payload.patient_id} FALL DETECTED")
+
+    event = PatientEvent(
+        id=str(uuid.uuid4()),
+        patient_id=payload.patient_id,
+        timestamp=datetime.now(),
+        type=event_type,
+        details=fall_result.dict(),
+        activity=activity_result,
+        fall=fall_result
+    )
+    _EVENTS.append(event)
+    return event
+
+@app.get("/api/events")
+async def get_events(limit: int = 100):
+    return list(reversed(list(_EVENTS)))[:limit]
+
+# --- WEBSOCKETS ---
+from fastapi import WebSocket, WebSocketDisconnect
+class ConnectionManager:
+    def __init__(self): self.active_connections = []
+    async def connect(self, websocket: WebSocket): await websocket.accept(); self.active_connections.append(websocket)
+    def disconnect(self, websocket: WebSocket): self.active_connections.remove(websocket)
+    async def broadcast(self, message: str):
+        for connection in self.active_connections: await connection.send_text(message)
+
+manager = ConnectionManager()
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -153,4 +247,5 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect: manager.disconnect(websocket)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8080)
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port)
